@@ -1,6 +1,10 @@
 package main
 
-import "flag"
+import (
+	"flag"
+	"github.com/vynaloze/mapreduce/engine/master"
+	"github.com/vynaloze/mapreduce/engine/worker"
+)
 
 func main() {
 	masterAddr := flag.String("master", "", "Master node address. Empty means this node should be master")
@@ -8,8 +12,8 @@ func main() {
 	flag.Parse()
 
 	if *masterAddr == "" {
-		serveMaster(*addr)
+		master.Run(*addr)
 	} else {
-		serveWorker(*masterAddr)
+		worker.Run(*addr, *masterAddr)
 	}
 }

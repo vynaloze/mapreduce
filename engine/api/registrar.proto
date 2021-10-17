@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "github.com/vynaloze/mapreduce/engine/api";
+
+service Registrar {
+  rpc Register (RegisterRequest) returns (RegisterReply) {}
+}
+
+message RegisterRequest {
+  string addr = 1;
+}
+
+message RegisterReply {
+  // intentionally empty
+}
