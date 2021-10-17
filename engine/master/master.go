@@ -2,26 +2,15 @@ package master
 
 import (
 	"fmt"
-	"sync"
+	"github.com/vynaloze/mapreduce/engine/master/controller"
 	"time"
 )
 
 func Run(addr string) {
-	workersMux := sync.RWMutex{}
-	workers := make(map[string]struct{}, 0)
-	registrar := make(chan string)
-
-	go serveRegistrar(addr, registrar)
+	c := controller.New(addr)
 
 	for {
-		select {
-		case w := <-registrar:
-			workersMux.Lock()
-			workers[w] = struct{}{}
-			workersMux.Unlock()
-		default:
-			fmt.Println(workers)
-			time.Sleep(500 * time.Millisecond)
-		}
+		fmt.Println(c.FreeWorkers(2))
+		time.Sleep(time.Second)
 	}
 }
