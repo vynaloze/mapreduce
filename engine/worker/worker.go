@@ -2,33 +2,54 @@ package worker
 
 import (
 	"context"
-	"fmt"
+	"github.com/google/uuid"
 	pb "github.com/vynaloze/mapreduce/engine/api"
 	"google.golang.org/grpc"
 	"log"
 	"time"
 )
 
+const (
+	ttlSeconds       = 30
+	backoffs         = 3
+	heartbeatSeconds = ttlSeconds/backoffs - 1
+)
+
 func Run(addr, masterAddr string) {
-	err := register(addr, masterAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
+	go startHeartbeat(addr, masterAddr)
+
+	select {}
 }
 
-func register(addr, masterAddr string) error {
+func startHeartbeat(addr, masterAddr string) {
 	conn, err := grpc.Dial(masterAddr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		return fmt.Errorf("could not connect: %v", err)
+		log.Fatalf("could not connect: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewRegistryClient(conn)
 
+	clientId := uuid.New().String()
+	fails := 0
+	for {
+		err := register(c, &pb.RegisterRequest{Addr: addr, Uuid: clientId, TtlSeconds: ttlSeconds})
+		if err != nil {
+			log.Printf("could not register: %v", err)
+			fails++
+			if fails >= backoffs {
+				_ = conn.Close()
+				log.Fatalf("max %d backoffs achieved - exiting", fails)
+			}
+		} else {
+			fails = 0
+		}
+		time.Sleep(heartbeatSeconds * time.Second)
+	}
+}
+
+func register(c pb.RegistryClient, req *pb.RegisterRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	_, err = c.Register(ctx, &pb.RegisterRequest{Addr: addr})
-	if err != nil {
-		return fmt.Errorf("could not register: %v", err)
-	}
-	return nil
+	_, err := c.Register(ctx, req)
+	return err
 }

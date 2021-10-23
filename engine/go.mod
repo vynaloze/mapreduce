@@ -3,6 +3,7 @@ module github.com/vynaloze/mapreduce/engine
 go 1.17
 
 require (
+	github.com/google/uuid v1.1.2
 	github.com/vynaloze/mapreduce/api v0.0.0
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1

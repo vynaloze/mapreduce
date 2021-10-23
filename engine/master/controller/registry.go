@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"time"
 )
 
 type registryServer struct {
@@ -14,7 +15,7 @@ type registryServer struct {
 }
 
 func (s *registryServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterReply, error) {
-	w := Worker{Addr: in.GetAddr()}
+	w := Worker{Uuid: in.GetUuid(), Addr: in.GetAddr(), ExpiresOn: time.Now().Add(time.Second * time.Duration(in.GetTtlSeconds()))}
 	log.Printf("Received Register: %v\n", w)
 	s.workers <- w
 	return &pb.RegisterReply{}, nil

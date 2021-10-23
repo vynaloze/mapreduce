@@ -8,8 +8,8 @@ service Registry {
 
 message RegisterRequest {
   string addr = 1;
-//  string uuid = 2;
-//  int32 ttl_seconds = 3;
+  string uuid = 2;
+  int64 ttl_seconds = 3;
 }
 
 message RegisterReply {
