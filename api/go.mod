@@ -1,9 +1,8 @@
-module github.com/vynaloze/mapreduce/engine
+module github.com/vynaloze/mapreduce/api
 
 go 1.17
 
 require (
-	github.com/vynaloze/mapreduce/api v0.0.0
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 )
@@ -15,5 +14,3 @@ require (
 	golang.org/x/text v0.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 )
-
-replace github.com/vynaloze/mapreduce/api v0.0.0 => ../api

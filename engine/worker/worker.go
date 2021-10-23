@@ -22,7 +22,7 @@ func register(addr, masterAddr string) error {
 		return fmt.Errorf("could not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewRegistrarClient(conn)
+	c := pb.NewRegistryClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()

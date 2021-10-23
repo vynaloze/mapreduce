@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/vynaloze/mapreduce/engine/master"
 	"github.com/vynaloze/mapreduce/engine/worker"
+	"log"
 )
 
 func main() {
@@ -12,8 +13,10 @@ func main() {
 	flag.Parse()
 
 	if *masterAddr == "" {
+		log.Println("starting as master on " + *addr)
 		master.Run(*addr)
 	} else {
+		log.Println("starting as worker on " + *addr)
 		worker.Run(*addr, *masterAddr)
 	}
 }

@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"google.golang.org/grpc"
+	"net"
 	"sync"
 )
 
@@ -26,22 +28,22 @@ type controller struct {
 	newWorkers <-chan string
 }
 
-func New(addr string) Controller {
+func New(lis net.Listener, s *grpc.Server) Controller {
 	c := &controller{
 		workers: make([]Worker, 0),
 	}
-	go c.receiveNewWorkers(serveRegistrar(addr))
+	go c.receiveNewWorkers(serveRegistry(lis, s))
 	return c
 }
 
 func (c *controller) FreeWorkers(count int) []Worker {
-	workers := make([]Worker, 0, count)
+	workers := make([]Worker, 0)
 
 	c.workersMux.RLock()
 	defer c.workersMux.RUnlock()
 
 	for i, w := range c.workers {
-		if i >= count {
+		if count == -1 || i >= count {
 			break
 		}
 		if w.Task == false {
