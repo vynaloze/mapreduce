@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option go_package = "github.com/vynaloze/mapreduce/engine/api";
+
+import "api/mapreduce.proto";
+
+message MapTask {
+  InputSpec input_spec = 1;
+  int64 input_split = 2;
+  //TODO mapper???
+}
+
+message ReduceTask {
+  OutputSpec output_spec = 1;
+  int64 partition = 2;
+  //TODO reducer???
+}
+
+message Key {
+  string key = 1;
+}
+
+message Value {
+  string value = 1;
+}
+
+service MapWorker {
+  rpc Map(MapTask) returns (stream Key) {}
+  rpc Get(Key) returns (stream Value) {}
+}
+
+message RemoteKey {
+  string addr = 1;
+  Key key = 2;
+}
+
+service ReduceWorker {
+  rpc Read(stream RemoteKey) returns (Done) {}
+  rpc Reduce(ReduceTask) returns (DFSFile) {}
+}
+
+message Done {}
