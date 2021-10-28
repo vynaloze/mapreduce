@@ -34,6 +34,9 @@ func serve(lis net.Listener, s *grpc.Server) (<-chan *pb.Job, chan<- *pb.JobStat
 	jobsStatus := make(chan *pb.JobStatus)
 
 	go func() {
+		defer close(jobs)
+		defer close(jobsStatus)
+
 		pb.RegisterMasterServer(s, &masterServer{jobs: jobs, jobsStatus: jobsStatus})
 		log.Printf("masterServer listening at %v", lis.Addr())
 		if err := s.Serve(lis); err != nil {

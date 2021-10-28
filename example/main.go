@@ -15,16 +15,20 @@ func main() {
 	job := api.Job{
 		Name: "example",
 		Spec: &api.Spec{
-			InputFiles: []*api.DFSFile{
-				{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/01.txt", Format: format}, // each has 4kB
-				{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/02.txt", Format: format},
-				{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/03.txt", Format: format},
-				{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/04.txt", Format: format},
+			In: &api.InputSpec{
+				InputFiles: []*api.DFSFile{
+					{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/01.txt", Format: format, SizeBytes: 4 * 1024},
+					{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/02.txt", Format: format, SizeBytes: 4 * 1024},
+					{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/03.txt", Format: format, SizeBytes: 4 * 1024},
+					{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/04.txt", Format: format, SizeBytes: 4 * 1024},
+				},
+				InputSplitSizeBytes: 1.5 * 1024,
 			},
-			InputSplitSizeBytes: 3 * 1024, // 3kB
-			OutputPartitions:    2,
-			OutputLocation:      "/mnt/d/workspace/s2/3/mapreduce/example/output/",
-			OutputFormat:        format,
+			Out: &api.OutputSpec{
+				OutputPartitions: 2,
+				OutputLocation:   "/mnt/d/workspace/s2/3/mapreduce/example/output/",
+				OutputFormat:     format,
+			},
 		},
 	}
 

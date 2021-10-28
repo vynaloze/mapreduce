@@ -24,6 +24,7 @@ func (s *registryServer) Register(ctx context.Context, in *pb.RegisterRequest) (
 func serveRegistry(lis net.Listener, s *grpc.Server) <-chan Worker {
 	workers := make(chan Worker, WorkerLimit)
 	go func() {
+		defer close(workers)
 		pb.RegisterRegistryServer(s, &registryServer{workers: workers})
 		log.Printf("registryServer listening at %v", lis.Addr())
 		if err := s.Serve(lis); err != nil {

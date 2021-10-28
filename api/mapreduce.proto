@@ -13,15 +13,23 @@ message FileFormat {
 message DFSFile {
   string location = 1;
   FileFormat format = 2;
+  int64 size_bytes = 3;
+}
+
+message InputSpec {
+  repeated DFSFile input_files = 1;
+  int64 input_split_size_bytes = 2;
+}
+
+message OutputSpec {
+  int32 output_partitions = 1;
+  string output_location = 2;
+  FileFormat output_format = 3;
 }
 
 message Spec {
-  repeated DFSFile input_files = 1;
-  int64 input_split_size_bytes = 2;
-
-  int32 output_partitions = 3;
-  string output_location = 4;
-  FileFormat output_format = 5;
+  InputSpec in = 1;
+  OutputSpec out = 2;
 
   // TODO mapper
   // TODO reducer
