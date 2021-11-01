@@ -1,8 +1,7 @@
 package master
 
 import (
-	"fmt"
-	"github.com/vynaloze/mapreduce/api"
+	"github.com/vynaloze/mapreduce/engine/api"
 	"github.com/vynaloze/mapreduce/engine/master/controller"
 	"github.com/vynaloze/mapreduce/engine/master/public"
 	"google.golang.org/grpc"
@@ -17,17 +16,17 @@ func Run(addr string) {
 	c := controller.New(lis, s)
 	jobs, jobStatus := public.New(lis, s)
 
+	scheduler := scheduler{
+		c,
+		jobStatus,
+		make([]*api.MapTaskStatus, 0),
+	}
+
 	for {
 		select {
 		case j := <-jobs:
-			log.Printf("received job: %v", j)
-			time.Sleep(time.Second)
-			jobStatus <- &api.JobStatus{Message: "ack: " + time.Now().String()}
-			time.Sleep(2 * time.Second)
-			jobStatus <- &api.JobStatus{Message: "done: " + time.Now().String()}
-			close(jobStatus)
+			scheduler.handleJob(j)
 		default:
-			fmt.Println(c.FreeWorkers(2))
 			time.Sleep(time.Second)
 		}
 	}

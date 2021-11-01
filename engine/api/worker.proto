@@ -4,17 +4,6 @@ option go_package = "github.com/vynaloze/mapreduce/engine/api";
 
 import "api/mapreduce.proto";
 
-message MapTask {
-  InputSpec input_spec = 1;
-  int64 input_split = 2;
-  //TODO mapper???
-}
-
-message ReduceTask {
-  OutputSpec output_spec = 1;
-  int64 partition = 2;
-  //TODO reducer???
-}
 
 message Key {
   string key = 1;
@@ -24,19 +13,56 @@ message Value {
   string value = 1;
 }
 
-service MapWorker {
-  rpc Map(MapTask) returns (stream Key) {}
-  rpc Get(Key) returns (stream Value) {}
+message Pair {
+  Key key = 1;
+  Value value = 2;
 }
 
-message RemoteKey {
+
+message Split {
+  DFSFile source = 1;
+  int64 offset = 2;
+  int64 limit = 3;
+}
+
+message Region {
   string addr = 1;
-  Key key = 2;
+  int64 partition = 2;
+}
+
+
+message MapTask {
+  Split input_split = 1;
+  //TODO mapper???
+}
+
+message MapTaskStatus {
+  MapTask task = 1;
+  Region region = 2;
+  // stats?
+}
+
+// TODO reduce
+message ReduceTask {
+  OutputSpec output_spec = 1;
+  int64 partition = 2;
+  //TODO reducer???
+}
+
+message ReduceTaskStatus {
+  DFSFile result = 1;
+  // stats?
+}
+
+
+service MapWorker {
+  rpc Map(MapTask) returns (stream MapTaskStatus) {}
+  rpc Get(Region) returns (stream Pair) {}
 }
 
 service ReduceWorker {
-  rpc Read(stream RemoteKey) returns (Done) {}
-  rpc Reduce(ReduceTask) returns (DFSFile) {}
+  rpc Reduce(ReduceTask) returns (stream ReduceTaskStatus) {}
+  rpc Notify(stream Region) returns (Empty) {}
 }
 
-message Done {}
+message Empty {}

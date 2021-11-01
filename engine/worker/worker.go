@@ -6,6 +6,7 @@ import (
 	pb "github.com/vynaloze/mapreduce/engine/api"
 	"google.golang.org/grpc"
 	"log"
+	"net"
 	"time"
 )
 
@@ -17,6 +18,18 @@ const (
 
 func Run(addr, masterAddr string) {
 	go startHeartbeat(addr, masterAddr)
+
+	//TODO
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterMapWorkerServer(s, &mapWorkerServer{addr: addr})
+	log.Printf("mapWorkerServer listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve mapWorkerServer: %v", err)
+	}
 
 	select {}
 }

@@ -12,15 +12,15 @@ import (
 type TextHandler struct {
 }
 
-func (t *TextHandler) Split(spec *external.InputSpec) []Split {
-	splits := make([]Split, 0)
+func (t *TextHandler) Split(spec *external.InputSpec) []internal.Split {
+	splits := make([]internal.Split, 0)
 	for _, file := range spec.GetInputFiles() {
 		splits = addSplitsForFile(spec, file, splits)
 	}
 	return splits
 }
 
-func addSplitsForFile(spec *external.InputSpec, file *external.DFSFile, splits []Split) []Split {
+func addSplitsForFile(spec *external.InputSpec, file *external.DFSFile, splits []internal.Split) []internal.Split {
 	f, err := os.Open(file.GetLocation())
 	if err != nil {
 		log.Fatalf("cannot split files: %v", err)
@@ -34,24 +34,24 @@ func addSplitsForFile(spec *external.InputSpec, file *external.DFSFile, splits [
 	for scanner.Scan() {
 		length := int64(len(scanner.Bytes()))
 		if offset+length > spec.GetInputSplitSizeBytes() {
-			splits = append(splits, Split{Source: file.GetLocation(), Offset: prevOffset, Limit: offset})
+			splits = append(splits, internal.Split{Source: file, Offset: prevOffset, Limit: offset})
 			prevOffset = offset
 		}
 		offset += length + 1 // 1 byte for stripped newline
 	}
-	splits = append(splits, Split{Source: file.GetLocation(), Offset: prevOffset, Limit: offset})
+	splits = append(splits, internal.Split{Source: file, Offset: prevOffset, Limit: offset})
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
 	return splits
 }
 
-func (t *TextHandler) Read(split Split) <-chan Pair {
-	c := make(chan Pair)
+func (t *TextHandler) Read(split *internal.Split) <-chan *internal.Pair {
+	c := make(chan *internal.Pair)
 	go func() {
 		defer close(c)
 
-		f, err := os.Open(split.Source)
+		f, err := os.Open(split.Source.GetLocation())
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -66,7 +66,7 @@ func (t *TextHandler) Read(split Split) <-chan Pair {
 
 		offset := split.Offset
 		for scanner.Scan() {
-			c <- Pair{Key: &internal.Key{Key: strconv.FormatInt(offset, 10)}, Value: &internal.Value{Value: scanner.Text()}}
+			c <- &internal.Pair{Key: &internal.Key{Key: strconv.FormatInt(offset, 10)}, Value: &internal.Value{Value: scanner.Text()}}
 			offset += int64(len(scanner.Bytes())) + 1
 			if offset >= split.Limit {
 				break

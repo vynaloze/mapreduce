@@ -4,7 +4,6 @@ package api
 
 import (
 	context "context"
-	api "github.com/vynaloze/mapreduce/api"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -20,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MapWorkerClient interface {
 	Map(ctx context.Context, in *MapTask, opts ...grpc.CallOption) (MapWorker_MapClient, error)
-	Get(ctx context.Context, in *Key, opts ...grpc.CallOption) (MapWorker_GetClient, error)
+	Get(ctx context.Context, in *Region, opts ...grpc.CallOption) (MapWorker_GetClient, error)
 }
 
 type mapWorkerClient struct {
@@ -47,7 +46,7 @@ func (c *mapWorkerClient) Map(ctx context.Context, in *MapTask, opts ...grpc.Cal
 }
 
 type MapWorker_MapClient interface {
-	Recv() (*Key, error)
+	Recv() (*MapTaskStatus, error)
 	grpc.ClientStream
 }
 
@@ -55,15 +54,15 @@ type mapWorkerMapClient struct {
 	grpc.ClientStream
 }
 
-func (x *mapWorkerMapClient) Recv() (*Key, error) {
-	m := new(Key)
+func (x *mapWorkerMapClient) Recv() (*MapTaskStatus, error) {
+	m := new(MapTaskStatus)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *mapWorkerClient) Get(ctx context.Context, in *Key, opts ...grpc.CallOption) (MapWorker_GetClient, error) {
+func (c *mapWorkerClient) Get(ctx context.Context, in *Region, opts ...grpc.CallOption) (MapWorker_GetClient, error) {
 	stream, err := c.cc.NewStream(ctx, &MapWorker_ServiceDesc.Streams[1], "/MapWorker/Get", opts...)
 	if err != nil {
 		return nil, err
@@ -79,7 +78,7 @@ func (c *mapWorkerClient) Get(ctx context.Context, in *Key, opts ...grpc.CallOpt
 }
 
 type MapWorker_GetClient interface {
-	Recv() (*Value, error)
+	Recv() (*Pair, error)
 	grpc.ClientStream
 }
 
@@ -87,8 +86,8 @@ type mapWorkerGetClient struct {
 	grpc.ClientStream
 }
 
-func (x *mapWorkerGetClient) Recv() (*Value, error) {
-	m := new(Value)
+func (x *mapWorkerGetClient) Recv() (*Pair, error) {
+	m := new(Pair)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -100,7 +99,7 @@ func (x *mapWorkerGetClient) Recv() (*Value, error) {
 // for forward compatibility
 type MapWorkerServer interface {
 	Map(*MapTask, MapWorker_MapServer) error
-	Get(*Key, MapWorker_GetServer) error
+	Get(*Region, MapWorker_GetServer) error
 	mustEmbedUnimplementedMapWorkerServer()
 }
 
@@ -111,7 +110,7 @@ type UnimplementedMapWorkerServer struct {
 func (UnimplementedMapWorkerServer) Map(*MapTask, MapWorker_MapServer) error {
 	return status.Errorf(codes.Unimplemented, "method Map not implemented")
 }
-func (UnimplementedMapWorkerServer) Get(*Key, MapWorker_GetServer) error {
+func (UnimplementedMapWorkerServer) Get(*Region, MapWorker_GetServer) error {
 	return status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedMapWorkerServer) mustEmbedUnimplementedMapWorkerServer() {}
@@ -136,7 +135,7 @@ func _MapWorker_Map_Handler(srv interface{}, stream grpc.ServerStream) error {
 }
 
 type MapWorker_MapServer interface {
-	Send(*Key) error
+	Send(*MapTaskStatus) error
 	grpc.ServerStream
 }
 
@@ -144,12 +143,12 @@ type mapWorkerMapServer struct {
 	grpc.ServerStream
 }
 
-func (x *mapWorkerMapServer) Send(m *Key) error {
+func (x *mapWorkerMapServer) Send(m *MapTaskStatus) error {
 	return x.ServerStream.SendMsg(m)
 }
 
 func _MapWorker_Get_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Key)
+	m := new(Region)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -157,7 +156,7 @@ func _MapWorker_Get_Handler(srv interface{}, stream grpc.ServerStream) error {
 }
 
 type MapWorker_GetServer interface {
-	Send(*Value) error
+	Send(*Pair) error
 	grpc.ServerStream
 }
 
@@ -165,7 +164,7 @@ type mapWorkerGetServer struct {
 	grpc.ServerStream
 }
 
-func (x *mapWorkerGetServer) Send(m *Value) error {
+func (x *mapWorkerGetServer) Send(m *Pair) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -195,8 +194,8 @@ var MapWorker_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ReduceWorkerClient interface {
-	Read(ctx context.Context, opts ...grpc.CallOption) (ReduceWorker_ReadClient, error)
-	Reduce(ctx context.Context, in *ReduceTask, opts ...grpc.CallOption) (*api.DFSFile, error)
+	Reduce(ctx context.Context, in *ReduceTask, opts ...grpc.CallOption) (ReduceWorker_ReduceClient, error)
+	Notify(ctx context.Context, opts ...grpc.CallOption) (ReduceWorker_NotifyClient, error)
 }
 
 type reduceWorkerClient struct {
@@ -207,55 +206,78 @@ func NewReduceWorkerClient(cc grpc.ClientConnInterface) ReduceWorkerClient {
 	return &reduceWorkerClient{cc}
 }
 
-func (c *reduceWorkerClient) Read(ctx context.Context, opts ...grpc.CallOption) (ReduceWorker_ReadClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ReduceWorker_ServiceDesc.Streams[0], "/ReduceWorker/Read", opts...)
+func (c *reduceWorkerClient) Reduce(ctx context.Context, in *ReduceTask, opts ...grpc.CallOption) (ReduceWorker_ReduceClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ReduceWorker_ServiceDesc.Streams[0], "/ReduceWorker/Reduce", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &reduceWorkerReadClient{stream}
-	return x, nil
-}
-
-type ReduceWorker_ReadClient interface {
-	Send(*RemoteKey) error
-	CloseAndRecv() (*Done, error)
-	grpc.ClientStream
-}
-
-type reduceWorkerReadClient struct {
-	grpc.ClientStream
-}
-
-func (x *reduceWorkerReadClient) Send(m *RemoteKey) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *reduceWorkerReadClient) CloseAndRecv() (*Done, error) {
+	x := &reduceWorkerReduceClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(Done)
+	return x, nil
+}
+
+type ReduceWorker_ReduceClient interface {
+	Recv() (*ReduceTaskStatus, error)
+	grpc.ClientStream
+}
+
+type reduceWorkerReduceClient struct {
+	grpc.ClientStream
+}
+
+func (x *reduceWorkerReduceClient) Recv() (*ReduceTaskStatus, error) {
+	m := new(ReduceTaskStatus)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *reduceWorkerClient) Reduce(ctx context.Context, in *ReduceTask, opts ...grpc.CallOption) (*api.DFSFile, error) {
-	out := new(api.DFSFile)
-	err := c.cc.Invoke(ctx, "/ReduceWorker/Reduce", in, out, opts...)
+func (c *reduceWorkerClient) Notify(ctx context.Context, opts ...grpc.CallOption) (ReduceWorker_NotifyClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ReduceWorker_ServiceDesc.Streams[1], "/ReduceWorker/Notify", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &reduceWorkerNotifyClient{stream}
+	return x, nil
+}
+
+type ReduceWorker_NotifyClient interface {
+	Send(*Region) error
+	CloseAndRecv() (*Empty, error)
+	grpc.ClientStream
+}
+
+type reduceWorkerNotifyClient struct {
+	grpc.ClientStream
+}
+
+func (x *reduceWorkerNotifyClient) Send(m *Region) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *reduceWorkerNotifyClient) CloseAndRecv() (*Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Empty)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // ReduceWorkerServer is the server API for ReduceWorker service.
 // All implementations must embed UnimplementedReduceWorkerServer
 // for forward compatibility
 type ReduceWorkerServer interface {
-	Read(ReduceWorker_ReadServer) error
-	Reduce(context.Context, *ReduceTask) (*api.DFSFile, error)
+	Reduce(*ReduceTask, ReduceWorker_ReduceServer) error
+	Notify(ReduceWorker_NotifyServer) error
 	mustEmbedUnimplementedReduceWorkerServer()
 }
 
@@ -263,11 +285,11 @@ type ReduceWorkerServer interface {
 type UnimplementedReduceWorkerServer struct {
 }
 
-func (UnimplementedReduceWorkerServer) Read(ReduceWorker_ReadServer) error {
-	return status.Errorf(codes.Unimplemented, "method Read not implemented")
+func (UnimplementedReduceWorkerServer) Reduce(*ReduceTask, ReduceWorker_ReduceServer) error {
+	return status.Errorf(codes.Unimplemented, "method Reduce not implemented")
 }
-func (UnimplementedReduceWorkerServer) Reduce(context.Context, *ReduceTask) (*api.DFSFile, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Reduce not implemented")
+func (UnimplementedReduceWorkerServer) Notify(ReduceWorker_NotifyServer) error {
+	return status.Errorf(codes.Unimplemented, "method Notify not implemented")
 }
 func (UnimplementedReduceWorkerServer) mustEmbedUnimplementedReduceWorkerServer() {}
 
@@ -282,48 +304,51 @@ func RegisterReduceWorkerServer(s grpc.ServiceRegistrar, srv ReduceWorkerServer)
 	s.RegisterService(&ReduceWorker_ServiceDesc, srv)
 }
 
-func _ReduceWorker_Read_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ReduceWorkerServer).Read(&reduceWorkerReadServer{stream})
+func _ReduceWorker_Reduce_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ReduceTask)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ReduceWorkerServer).Reduce(m, &reduceWorkerReduceServer{stream})
 }
 
-type ReduceWorker_ReadServer interface {
-	SendAndClose(*Done) error
-	Recv() (*RemoteKey, error)
+type ReduceWorker_ReduceServer interface {
+	Send(*ReduceTaskStatus) error
 	grpc.ServerStream
 }
 
-type reduceWorkerReadServer struct {
+type reduceWorkerReduceServer struct {
 	grpc.ServerStream
 }
 
-func (x *reduceWorkerReadServer) SendAndClose(m *Done) error {
+func (x *reduceWorkerReduceServer) Send(m *ReduceTaskStatus) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *reduceWorkerReadServer) Recv() (*RemoteKey, error) {
-	m := new(RemoteKey)
+func _ReduceWorker_Notify_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ReduceWorkerServer).Notify(&reduceWorkerNotifyServer{stream})
+}
+
+type ReduceWorker_NotifyServer interface {
+	SendAndClose(*Empty) error
+	Recv() (*Region, error)
+	grpc.ServerStream
+}
+
+type reduceWorkerNotifyServer struct {
+	grpc.ServerStream
+}
+
+func (x *reduceWorkerNotifyServer) SendAndClose(m *Empty) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *reduceWorkerNotifyServer) Recv() (*Region, error) {
+	m := new(Region)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
-}
-
-func _ReduceWorker_Reduce_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReduceTask)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ReduceWorkerServer).Reduce(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ReduceWorker/Reduce",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReduceWorkerServer).Reduce(ctx, req.(*ReduceTask))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 // ReduceWorker_ServiceDesc is the grpc.ServiceDesc for ReduceWorker service.
@@ -332,16 +357,16 @@ func _ReduceWorker_Reduce_Handler(srv interface{}, ctx context.Context, dec func
 var ReduceWorker_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ReduceWorker",
 	HandlerType: (*ReduceWorkerServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Reduce",
-			Handler:    _ReduceWorker_Reduce_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Read",
-			Handler:       _ReduceWorker_Read_Handler,
+			StreamName:    "Reduce",
+			Handler:       _ReduceWorker_Reduce_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "Notify",
+			Handler:       _ReduceWorker_Notify_Handler,
 			ClientStreams: true,
 		},
 	},
