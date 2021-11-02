@@ -27,12 +27,16 @@ message Split {
 
 message Region {
   string addr = 1;
+
   int64 partition = 2;
+  string taskId = 3;
 }
 
 
 message MapTask {
-  Split input_split = 1;
+  string id = 1;
+  Split input_split = 2;
+  int64 partitions = 3;
   //TODO mapper???
 }
 

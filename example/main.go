@@ -19,8 +19,8 @@ func main() {
 				InputFiles: []*api.DFSFile{
 					{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/01.txt", Format: format, SizeBytes: 4 * 1024},
 					{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/02.txt", Format: format, SizeBytes: 4 * 1024},
-					{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/03.txt", Format: format, SizeBytes: 4 * 1024},
-					{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/04.txt", Format: format, SizeBytes: 4 * 1024},
+					//{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/03.txt", Format: format, SizeBytes: 4 * 1024}, FIXME error token too long in one of those files - TEST AND FIX IT
+					//{Location: "/mnt/d/workspace/s2/3/mapreduce/example/input/04.txt", Format: format, SizeBytes: 4 * 1024},
 				},
 				InputSplitSizeBytes: 1.5 * 1024,
 			},

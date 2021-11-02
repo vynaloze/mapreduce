@@ -27,7 +27,7 @@ func (s *scheduler) handleJob(job *external.Job) {
 	s.notify(fmt.Sprintf("produced %d splits", len(splits)))
 
 	s.notify("start map phase")
-	s.mapPhase(splits)
+	s.mapPhase(splits, job.GetSpec().GetOut().GetOutputPartitions())
 	s.notify(fmt.Sprintf("end map phase: received %d regions", len(s.mapTaskResults)))
 
 	// TODO start with reduce tasks and take all remaining workers for map tasks (also later TODO)

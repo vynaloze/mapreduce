@@ -22,7 +22,7 @@ message InputSpec {
 }
 
 message OutputSpec {
-  int32 output_partitions = 1;
+  int64 output_partitions = 1;
   string output_location = 2;
   FileFormat output_format = 3;
 }
