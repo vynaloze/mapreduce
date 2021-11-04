@@ -46,7 +46,7 @@ message MapTaskStatus {
   // stats?
 }
 
-// TODO reduce
+
 message ReduceTask {
   OutputSpec output_spec = 1;
   int64 partition = 2;
@@ -66,7 +66,9 @@ service MapWorker {
 
 service ReduceWorker {
   rpc Reduce(ReduceTask) returns (stream ReduceTaskStatus) {}
-  rpc Notify(stream Region) returns (Empty) {}
+  rpc Notify(stream Region) returns (MissingRegions) {}
 }
 
-message Empty {}
+message MissingRegions {
+  repeated Region regions = 1;
+}

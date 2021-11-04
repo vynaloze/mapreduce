@@ -1,7 +1,6 @@
 package master
 
 import (
-	"github.com/vynaloze/mapreduce/engine/api"
 	"github.com/vynaloze/mapreduce/engine/master/controller"
 	"github.com/vynaloze/mapreduce/engine/master/public"
 	"google.golang.org/grpc"
@@ -19,7 +18,6 @@ func Run(addr string) {
 	scheduler := scheduler{
 		c,
 		jobStatus,
-		make([]*api.MapTaskStatus, 0),
 	}
 
 	for {

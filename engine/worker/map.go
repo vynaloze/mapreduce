@@ -78,7 +78,7 @@ func (s *mapWorkerServer) Map(task *pb.MapTask, stream pb.MapWorker_MapServer) e
 func (s *mapWorkerServer) Get(region *pb.Region, stream pb.MapWorker_GetServer) error {
 	s.mux.RLock()
 	ps := s.taskPartitions[region.GetTaskId()]
-	s.mux.Unlock()
+	s.mux.RUnlock()
 	ps.mux.RLock()
 	p := ps.partitions[region.GetPartition()]
 	ps.mux.RUnlock()
@@ -94,7 +94,7 @@ func (s *mapWorkerServer) Get(region *pb.Region, stream pb.MapWorker_GetServer) 
 func hash(s string, r int64) int64 {
 	h := fnv.New64a()
 	h.Write([]byte(s))
-	return int64(h.Sum64()%uint64(r)) + 1
+	return int64(h.Sum64() % uint64(r))
 }
 
 type WordCount struct{}

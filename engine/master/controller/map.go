@@ -11,9 +11,10 @@ import (
 	"time"
 )
 
-const concurrentMapTaskLimit = 5 //TODO dynamic
+const concurrentMapTaskLimit = 3 //TODO dynamic
 
 func (c *controller) ProcessMapTasks(tasks <-chan *internal.MapTask, results chan<- *internal.MapTaskStatus) {
+	defer close(results)
 	var wg sync.WaitGroup
 	for i := 0; i < concurrentMapTaskLimit; i++ {
 		wg.Add(1)
@@ -21,24 +22,27 @@ func (c *controller) ProcessMapTasks(tasks <-chan *internal.MapTask, results cha
 		go c.processMapTasks(&wg, tasks, results)
 	}
 	wg.Wait()
-	close(results)
 }
 
 func (c *controller) processMapTasks(wg *sync.WaitGroup, tasks <-chan *internal.MapTask, results chan<- *internal.MapTaskStatus) {
 	for task := range tasks {
-		for {
-			err := c.tryProcessMapTasks(task, results)
-			if err != nil {
-				log.Println(err)
-			} else {
-				break
-			}
-		}
+		c.ProcessMapTask(task, results)
 	}
 	wg.Done()
 }
 
-func (c *controller) tryProcessMapTasks(task *internal.MapTask, results chan<- *internal.MapTaskStatus) error {
+func (c *controller) ProcessMapTask(task *internal.MapTask, results chan<- *internal.MapTaskStatus) {
+	for {
+		err := c.tryProcessMapTask(task, results)
+		if err != nil {
+			log.Println(err)
+		} else {
+			break
+		}
+	}
+}
+
+func (c *controller) tryProcessMapTask(task *internal.MapTask, results chan<- *internal.MapTaskStatus) error {
 	var w *MapWorker
 	for {
 		w = c.getNextFreeWorkerForMap()

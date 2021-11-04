@@ -27,8 +27,10 @@ func Run(addr, masterAddr string) {
 	s := grpc.NewServer()
 	pb.RegisterMapWorkerServer(s, &mapWorkerServer{addr: addr, taskPartitions: make(map[string]*taskPartitions)})
 	log.Printf("mapWorkerServer listening at %v", lis.Addr())
+	pb.RegisterReduceWorkerServer(s, &reduceWorkerServer{data: make(map[string][]string)})
+	log.Printf("RegisterReduceWorkerServer listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve mapWorkerServer: %v", err)
+		log.Fatalf("failed to serve: %v", err)
 	}
 
 	select {}

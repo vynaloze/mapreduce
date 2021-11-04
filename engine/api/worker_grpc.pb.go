@@ -249,7 +249,7 @@ func (c *reduceWorkerClient) Notify(ctx context.Context, opts ...grpc.CallOption
 
 type ReduceWorker_NotifyClient interface {
 	Send(*Region) error
-	CloseAndRecv() (*Empty, error)
+	CloseAndRecv() (*MissingRegions, error)
 	grpc.ClientStream
 }
 
@@ -261,11 +261,11 @@ func (x *reduceWorkerNotifyClient) Send(m *Region) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *reduceWorkerNotifyClient) CloseAndRecv() (*Empty, error) {
+func (x *reduceWorkerNotifyClient) CloseAndRecv() (*MissingRegions, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(Empty)
+	m := new(MissingRegions)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -330,7 +330,7 @@ func _ReduceWorker_Notify_Handler(srv interface{}, stream grpc.ServerStream) err
 }
 
 type ReduceWorker_NotifyServer interface {
-	SendAndClose(*Empty) error
+	SendAndClose(*MissingRegions) error
 	Recv() (*Region, error)
 	grpc.ServerStream
 }
@@ -339,7 +339,7 @@ type reduceWorkerNotifyServer struct {
 	grpc.ServerStream
 }
 
-func (x *reduceWorkerNotifyServer) SendAndClose(m *Empty) error {
+func (x *reduceWorkerNotifyServer) SendAndClose(m *MissingRegions) error {
 	return x.ServerStream.SendMsg(m)
 }
 

@@ -2,11 +2,9 @@ package master
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	external "github.com/vynaloze/mapreduce/api"
 	internal "github.com/vynaloze/mapreduce/engine/api"
 	"github.com/vynaloze/mapreduce/engine/io"
-	"log"
 )
 
 func (s *scheduler) split(spec *external.InputSpec) ([]internal.Split, error) {
@@ -22,19 +20,4 @@ func (s *scheduler) split(spec *external.InputSpec) ([]internal.Split, error) {
 		}
 	}
 	return splits, nil
-}
-
-func (s *scheduler) mapPhase(splits []internal.Split, partitions int64) {
-	mapTasks := make(chan *internal.MapTask, len(splits))
-	mapTaskResults := make(chan *internal.MapTaskStatus)
-	for i := range splits {
-		mapTasks <- &internal.MapTask{Id: uuid.New().String(), InputSplit: &splits[i], Partitions: partitions}
-	}
-	close(mapTasks)
-	go s.controller.ProcessMapTasks(mapTasks, mapTaskResults)
-	for mtr := range mapTaskResults {
-		log.Printf("received map task result: %+v", mtr)
-		s.mapTaskResults = append(s.mapTaskResults, mtr)
-		log.Printf("total results: %d", len(s.mapTaskResults))
-	}
 }
