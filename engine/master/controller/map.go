@@ -35,7 +35,7 @@ func (c *controller) ProcessMapTask(task *internal.MapTask, results chan<- *inte
 	for {
 		err := c.tryProcessMapTask(task, results)
 		if err != nil {
-			log.Println(err)
+			log.Printf("error during map: %s", err)
 		} else {
 			break
 		}
@@ -49,13 +49,15 @@ func (c *controller) tryProcessMapTask(task *internal.MapTask, results chan<- *i
 		if w != nil {
 			break
 		}
-		log.Println("no free workers for map task - try again in 1 sec")
-		time.Sleep(time.Second)
+		log.Println("no free workers for map task - try again in 5 sec")
+		time.Sleep(5 * time.Second)
 	}
 	defer c.freeMapWorker(w)
 	defer w.conn.Close()
 
-	stream, err := w.client.Map(context.Background(), task)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	stream, err := w.client.Map(ctx, task)
 	if err != nil {
 		return fmt.Errorf("error: request w.Map(%+v): %w\n", task, err)
 
@@ -79,15 +81,15 @@ type MapWorker struct {
 	client internal.MapWorkerClient
 }
 
-func NewMapWorker(w *Worker) *MapWorker {
-	conn, err := grpc.Dial(w.Addr, grpc.WithInsecure(), grpc.WithBlock())
+func NewMapWorker(w *Worker) (*MapWorker, error) {
+	conn, err := grpc.Dial(w.Addr, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("could not connect: %v", err)
+		return nil, fmt.Errorf("could not establish connection to map worker: %w", err)
 	}
 	c := internal.NewMapWorkerClient(conn)
 	return &MapWorker{
 		Worker: w,
 		conn:   conn,
 		client: c,
-	}
+	}, nil
 }

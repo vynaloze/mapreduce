@@ -25,9 +25,9 @@ func (s *scheduler) handleJob(job *external.Job) {
 		return
 	}
 	s.notify(fmt.Sprintf("produced %d splits", len(splits)))
-	maxRegions := int64(len(splits)) * job.GetSpec().GetOut().GetOutputPartitions()
 
 	s.notify("start map phase")
+	mapInProgress := sync.Mutex{}
 	mapTasks := make(map[string]*internal.MapTask)
 	initialMapTasksChan := make(chan *internal.MapTask, len(splits))
 	for i := range splits {
@@ -37,96 +37,126 @@ func (s *scheduler) handleJob(job *external.Job) {
 	}
 	close(initialMapTasksChan)
 	mapTaskResults := make(map[int64][]*internal.MapTaskStatus, 0)
-	initialMapTaskResultsChan := make(chan *internal.MapTaskStatus)
-	go s.controller.ProcessMapTasks(initialMapTasksChan, initialMapTaskResultsChan)
+	mapTaskResultsBatches := make(chan chan *internal.MapTaskStatus, 1)
+	initialBatch := make(chan *internal.MapTaskStatus)
+	mapTaskResultsBatches <- initialBatch
+	go s.controller.ProcessMapTasks(initialMapTasksChan, initialBatch)
+	mapInProgress.Lock()
 
-	s.notify("start reduce phase")
+	s.notify("prepare reduce phase")
 	reduceTasks := make(map[int64]*controller.ReduceTask, job.GetSpec().GetOut().GetOutputPartitions())
 	reduceTasksChan := make(chan *controller.ReduceTask, job.GetSpec().GetOut().GetOutputPartitions())
-	reduceRegions := make(map[int64]chan *internal.Region, job.GetSpec().GetOut().GetOutputPartitions())
+	reduceRegions := make(map[int64][]*internal.Region, job.GetSpec().GetOut().GetOutputPartitions())
 	rerunReduce := make(chan int64)
 	for i := int64(0); i < job.GetSpec().GetOut().GetOutputPartitions(); i++ {
 		rt := &controller.ReduceTask{
 			Task:        &internal.ReduceTask{OutputSpec: job.GetSpec().GetOut(), Partition: i},
-			Regions:     make(chan chan *internal.Region, 1),
+			Regions:     make(chan []*internal.Region, 1),
 			RerunReduce: rerunReduce,
 		}
 		reduceTasks[i] = rt
 		reduceTasksChan <- rt
 
-		rr := make(chan *internal.Region, maxRegions)
-		reduceRegions[i] = rr
-		rt.Regions <- rr
+		//rr := make([]*internal.Region, maxRegions)
+		//reduceRegions[i] = rr
+		//rt.Regions <- rr
 	}
-	close(reduceTasksChan)
-	rerunMapTasks := make(chan string)
+	rerunMapTasks := make(chan controller.RerunMapTasks)
 	reduceTaskResultsChan := make(chan *internal.ReduceTaskStatus)
 	go s.controller.ProcessReduceTasks(reduceTasksChan, rerunMapTasks, reduceTaskResultsChan)
 
-	rerunMapTaskResultsChan := make(chan *internal.MapTaskStatus)
-
 	mux := sync.Mutex{}
 	go func() {
-		for rerunMapTaskId := range rerunMapTasks {
+		for rerunMapTask := range rerunMapTasks {
+			mapInProgress.Lock()
 			mux.Lock()
-			log.Printf("map worker failure during reduce phase: reruning task %+v", mapTasks[rerunMapTaskId])
-			go s.controller.ProcessMapTask(mapTasks[rerunMapTaskId], rerunMapTaskResultsChan)
+			log.Printf("map worker failure during reduce phase: reruning tasks %+v", rerunMapTask)
+			// clear results with failed task
+			for _, results := range mapTaskResults {
+				okResults := make([]*internal.MapTaskStatus, 0)
+				for _, r := range results {
+					for _, rrid := range rerunMapTask.MapTaskIds {
+						if r.GetTask().GetId() != rrid || r.GetRegion().GetPartition() != rerunMapTask.Partition {
+							okResults = append(okResults, r)
+						}
+					}
+				}
+				results = okResults
+			}
+			log.Printf("cleared results containing failed tasks %+v", rerunMapTask)
+
+			// notify about new regions to download
+			//reduceRegions[rerunMapTask.Partition] = make([]*internal.Region, maxRegions)
+
+			// rerun
+			tasks := make(chan *internal.MapTask, len(rerunMapTask.MapTaskIds))
+			for _, rrid := range rerunMapTask.MapTaskIds {
+				tasks <- mapTasks[rrid]
+				log.Printf("resubmitted map task %s", rrid)
+			}
+			close(tasks)
+			resBatch := make(chan *internal.MapTaskStatus)
+			mapTaskResultsBatches <- resBatch
+			go s.controller.ProcessMapTasks(tasks, resBatch)
 			mux.Unlock()
 		}
 	}()
 	go func() {
 		for rerunReduceTaskPartition := range rerunReduce {
 			mux.Lock()
-			log.Printf("reduce task %d failure: request all regions again", rerunReduceTaskPartition)
-			r := make(chan *internal.Region, maxRegions)
+			log.Printf("reduce task #%d failure: request all regions again", rerunReduceTaskPartition)
+			r := make([]*internal.Region, 0)
+			for _, mtr := range mapTaskResults[rerunReduceTaskPartition] {
+				r = append(r, mtr.GetRegion())
+			}
 			reduceRegions[rerunReduceTaskPartition] = r
 			reduceTasks[rerunReduceTaskPartition].Regions <- r
-			for _, mtr := range mapTaskResults[rerunReduceTaskPartition] {
-				r <- mtr.GetRegion()
-			}
-			// TODO close??? where???
+			log.Printf("submitted region replay for reduce task #%d", rerunReduceTaskPartition)
 			mux.Unlock()
 		}
 	}()
 	go func() {
-		for mtr := range initialMapTaskResultsChan {
-			mux.Lock()
-			log.Printf("received initial map task result: %+v", mtr)
-			p := mtr.GetRegion().GetPartition()
-			_, ok := mapTaskResults[p]
-			if !ok {
-				mapTaskResults[p] = make([]*internal.MapTaskStatus, 0)
+		for mapTaskBatch := range mapTaskResultsBatches {
+			var tasksNo int
+
+			for i := range reduceRegions {
+				reduceRegions[i] = make([]*internal.Region, 0)
 			}
-			mapTaskResults[p] = append(mapTaskResults[p], mtr)
-			reduceRegions[p] <- mtr.GetRegion()
-			mux.Unlock()
-		}
-		log.Println("finished all initial map tasks")
-		for _, c := range reduceRegions {
-			close(c)
-		}
-	}()
-	go func() {
-		for mtr := range rerunMapTaskResultsChan {
-			mux.Lock()
-			log.Printf("received rerun map task result: %+v", mtr)
-			p := mtr.GetRegion().GetPartition()
-			_, ok := mapTaskResults[p]
-			if !ok {
-				mapTaskResults[p] = make([]*internal.MapTaskStatus, 0)
+			for mtr := range mapTaskBatch {
+				tasksNo++
+				mux.Lock()
+				log.Printf("received initial map task result: %+v", mtr.GetRegion())
+				p := mtr.GetRegion().GetPartition()
+				_, ok := mapTaskResults[p]
+				if !ok {
+					mapTaskResults[p] = make([]*internal.MapTaskStatus, 0)
+				}
+				mapTaskResults[p] = append(mapTaskResults[p], mtr)
+				reduceRegions[p] = append(reduceRegions[p], mtr.GetRegion())
+				mux.Unlock()
 			}
-			mapTaskResults[p] = append(mapTaskResults[p], mtr)
-			reduceRegions[p] <- mtr.GetRegion()
-			mux.Unlock()
+			s.notify(fmt.Sprintf("finished all (%d) map tasks in current batch", tasksNo))
+			s.notify("start reduce phase")
+			for p, rt := range reduceTasks {
+				rt.Regions <- reduceRegions[p]
+			}
+			mapInProgress.Unlock()
 		}
 	}()
 
+	var finishedReduceTasks int64
 	for rts := range reduceTaskResultsChan {
 		log.Printf("received reduce task result: %+v", rts)
+		finishedReduceTasks++
+		if finishedReduceTasks >= job.GetSpec().GetOut().GetOutputPartitions() {
+			s.notify(fmt.Sprintf("finished all %d reduce tasks", finishedReduceTasks))
+			close(reduceTasksChan)
+		}
 	}
-	s.notify("finished mapreduce")
+	s.notify("finished job")
 }
 
 func (s *scheduler) notify(msg string) {
+	log.Println(msg)
 	s.notifyClient <- &external.JobStatus{Message: msg}
 }

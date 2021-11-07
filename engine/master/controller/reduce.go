@@ -15,11 +15,16 @@ const concurrentReduceTaskLimit = 2 //TODO dynamic
 
 type ReduceTask struct {
 	Task        *internal.ReduceTask
-	Regions     chan chan *internal.Region
+	Regions     chan []*internal.Region
 	RerunReduce chan int64
 }
 
-func (c *controller) ProcessReduceTasks(tasks <-chan *ReduceTask, rerunMapTasks chan<- string, results chan<- *internal.ReduceTaskStatus) {
+type RerunMapTasks struct {
+	MapTaskIds []string
+	Partition  int64
+}
+
+func (c *controller) ProcessReduceTasks(tasks <-chan *ReduceTask, rerunMapTasks chan<- RerunMapTasks, results chan<- *internal.ReduceTaskStatus) {
 	var wg sync.WaitGroup
 	for i := 0; i < concurrentReduceTaskLimit; i++ {
 		wg.Add(1)
@@ -32,12 +37,12 @@ func (c *controller) ProcessReduceTasks(tasks <-chan *ReduceTask, rerunMapTasks 
 	close(results)
 }
 
-func (c *controller) processReduceTasks(wg *sync.WaitGroup, tasks <-chan *ReduceTask, rerunMapTasks chan<- string, results chan<- *internal.ReduceTaskStatus) {
+func (c *controller) processReduceTasks(wg *sync.WaitGroup, tasks <-chan *ReduceTask, rerunMapTasks chan<- RerunMapTasks, results chan<- *internal.ReduceTaskStatus) {
 	for task := range tasks {
 		for {
 			err := c.tryProcessReduceTask(task, rerunMapTasks, results)
 			if err != nil {
-				log.Println(err)
+				log.Printf("error during reduce: %s", err)
 				task.RerunReduce <- task.Task.GetPartition()
 			} else {
 				//close(task.Regions)
@@ -48,15 +53,15 @@ func (c *controller) processReduceTasks(wg *sync.WaitGroup, tasks <-chan *Reduce
 	wg.Done()
 }
 
-func (c *controller) tryProcessReduceTask(task *ReduceTask, rerunMapTasks chan<- string, results chan<- *internal.ReduceTaskStatus) error {
+func (c *controller) tryProcessReduceTask(task *ReduceTask, rerunMapTasks chan<- RerunMapTasks, results chan<- *internal.ReduceTaskStatus) error {
 	var w *ReduceWorker
 	for {
 		w = c.getNextFreeWorkerForReduce()
 		if w != nil {
 			break
 		}
-		log.Println("no free workers for reduce task - try again in 1 sec")
-		time.Sleep(time.Second)
+		log.Println("no free workers for reduce task - try again in 5 sec")
+		time.Sleep(5 * time.Second)
 	}
 	defer c.freeReduceWorker(w)
 	defer w.conn.Close()
@@ -70,14 +75,18 @@ func (c *controller) tryProcessReduceTask(task *ReduceTask, rerunMapTasks chan<-
 		if len(missingRegions.GetRegions()) == 0 {
 			break
 		} else {
+			taskIds := make([]string, 0)
 			for _, region := range missingRegions.GetRegions() {
-				rerunMapTasks <- region.GetTaskId()
+				taskIds = append(taskIds, region.GetTaskId())
 			}
+			rerunMapTasks <- RerunMapTasks{MapTaskIds: taskIds, Partition: task.Task.GetPartition()}
 		}
 	}
 
-	log.Printf("send reduce task %d", task.Task.GetPartition())
-	stream, err := w.client.Reduce(context.Background(), task.Task)
+	log.Printf("start reduce task #%d", task.Task.GetPartition())
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	stream, err := w.client.Reduce(ctx, task.Task)
 	if err != nil {
 		return fmt.Errorf("error: request w.Reduce(%+v): %w\n", task.Task, err)
 	}
@@ -100,25 +109,30 @@ type ReduceWorker struct {
 	client internal.ReduceWorkerClient
 }
 
-func NewReduceWorker(w *Worker) *ReduceWorker {
-	conn, err := grpc.Dial(w.Addr, grpc.WithInsecure(), grpc.WithBlock())
+func NewReduceWorker(w *Worker) (*ReduceWorker, error) {
+	conn, err := grpc.Dial(w.Addr, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("could not connect: %v", err)
+		return nil, fmt.Errorf("could not establish connection to reduce worker: %w", err)
 	}
 	c := internal.NewReduceWorkerClient(conn)
 	return &ReduceWorker{
 		Worker: w,
 		conn:   conn,
 		client: c,
-	}
+	}, nil
 }
 
-func (rw *ReduceWorker) notifyOnce(regions <-chan *internal.Region) (*internal.MissingRegions, error) {
-	stream, err := rw.client.Notify(context.Background())
+func (rw *ReduceWorker) notifyOnce(regions []*internal.Region) (*internal.MissingRegions, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	stream, err := rw.client.Notify(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error: request w.Notify(<Regions>): %w\n", err)
 	}
-	for region := range regions {
+	for _, region := range regions {
+		if region == nil {
+			log.Fatalf("Notify(): region==nil") //FIXME
+		}
 		if err := stream.Send(region); err != nil {
 			return nil, fmt.Errorf("%v.Notify(%v) = %v", stream, region, err)
 		}

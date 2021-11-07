@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"strconv"
+	"time"
 )
 
 type reduceWorkerServer struct {
@@ -87,12 +88,14 @@ func (r *reduceWorkerServer) Notify(stream internal.ReduceWorker_NotifyServer) e
 }
 
 func (r *reduceWorkerServer) getFromMapWorker(region *internal.Region) error {
-	conn, err := grpc.Dial(region.GetAddr(), grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(region.GetAddr(), grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
 	if err != nil {
 		return fmt.Errorf("could not connect to map worker: %w", err)
 	}
 	c := internal.NewMapWorkerClient(conn)
-	stream, err := c.Get(context.Background(), region)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	stream, err := c.Get(ctx, region)
 	if err != nil {
 		return fmt.Errorf("error: request Get(%+v): %w\n", region, err)
 
@@ -129,6 +132,7 @@ func (w *WordCount) Reduce(key *internal.Key, values <-chan *internal.Value) <-c
 			}
 			result += i
 		}
+		time.Sleep(100 * time.Millisecond) //FIXME
 
 		o <- &internal.Pair{Key: key, Value: &internal.Value{Value: strconv.Itoa(result)}}
 	}()

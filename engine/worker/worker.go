@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	ttlSeconds       = 30
+	ttlSeconds       = 60
 	backoffs         = 3
 	heartbeatSeconds = ttlSeconds/backoffs - 1
 )
@@ -37,9 +37,9 @@ func Run(addr, masterAddr string) {
 }
 
 func startHeartbeat(addr, masterAddr string) {
-	conn, err := grpc.Dial(masterAddr, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(masterAddr, grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("could not connect: %v", err)
+		log.Fatalf("could not connect to master: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewRegistryClient(conn)
@@ -63,7 +63,7 @@ func startHeartbeat(addr, masterAddr string) {
 }
 
 func register(c pb.RegistryClient, req *pb.RegisterRequest) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	_, err := c.Register(ctx, req)
 	return err

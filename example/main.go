@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// TODO this boilerplate should go to client package
-	conn, err := grpc.Dial(":50050", grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(":50050", grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
 	}

@@ -1,12 +1,14 @@
 package worker
 
 import (
+	"fmt"
 	pb "github.com/vynaloze/mapreduce/engine/api"
 	"github.com/vynaloze/mapreduce/engine/io"
 	"hash/fnv"
 	"log"
 	"strings"
 	"sync"
+	"time"
 )
 
 const bufferSizePerPartition = 1000
@@ -30,6 +32,7 @@ func (s *mapWorkerServer) Map(task *pb.MapTask, stream pb.MapWorker_MapServer) e
 	s.mux.Lock()
 	s.taskPartitions[task.GetId()] = &taskPartitions{partitions: make(map[int64]chan *pb.Pair)}
 	s.mux.Unlock()
+	defer s.cleanup(task.GetId())
 
 	wc := &WordCount{}
 	th := &io.TextHandler{}
@@ -49,7 +52,7 @@ func (s *mapWorkerServer) Map(task *pb.MapTask, stream pb.MapWorker_MapServer) e
 			if !ok {
 				// new partition
 				c := make(chan *pb.Pair, bufferSizePerPartition)
-				defer close(c)
+				//defer close(c)
 				partitions.mux.Lock()
 				partitions.partitions[partition] = c
 				partitions.mux.Unlock()
@@ -74,12 +77,30 @@ func (s *mapWorkerServer) Map(task *pb.MapTask, stream pb.MapWorker_MapServer) e
 	return nil
 }
 
+func (s *mapWorkerServer) cleanup(taskId string) {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	s.taskPartitions[taskId].cleanup()
+}
+
+func (tp *taskPartitions) cleanup() {
+	for _, c := range tp.partitions {
+		close(c)
+	}
+}
+
 func (s *mapWorkerServer) Get(region *pb.Region, stream pb.MapWorker_GetServer) error {
 	s.mux.RLock()
-	ps := s.taskPartitions[region.GetTaskId()]
+	ps, ok := s.taskPartitions[region.GetTaskId()]
+	if !ok {
+		return fmt.Errorf("no result for task %s", region.GetTaskId())
+	}
 	s.mux.RUnlock()
 	ps.mux.RLock()
-	p := ps.partitions[region.GetPartition()]
+	p, ok := ps.partitions[region.GetPartition()]
+	if !ok {
+		return fmt.Errorf("no result for partition %d", region.GetPartition())
+	}
 	ps.mux.RUnlock()
 
 	for pair := range p {
@@ -109,9 +130,9 @@ func (w *WordCount) Map(key *pb.Key, value *pb.Value) <-chan *pb.Pair {
 			k := strings.ReplaceAll(word, ",", "")
 			kk := strings.ReplaceAll(k, ".", "")
 
-			// time.Sleep(10 * time.Millisecond) // FIXME
 			o <- &pb.Pair{Key: &pb.Key{Key: kk}, Value: &pb.Value{Value: "1"}}
 		}
+		time.Sleep(2000 * time.Millisecond) // FIXME
 	}()
 	return o
 }
