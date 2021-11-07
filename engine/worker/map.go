@@ -7,7 +7,6 @@ import (
 	"log"
 	"strings"
 	"sync"
-	"time"
 )
 
 const bufferSizePerPartition = 1000
@@ -26,7 +25,7 @@ type taskPartitions struct {
 }
 
 func (s *mapWorkerServer) Map(task *pb.MapTask, stream pb.MapWorker_MapServer) error {
-	log.Printf("received task: %+v", task)
+	log.Printf("received map task: %+v", task)
 
 	s.mux.Lock()
 	s.taskPartitions[task.GetId()] = &taskPartitions{partitions: make(map[int64]chan *pb.Pair)}
@@ -107,7 +106,7 @@ func (w *WordCount) Map(key *pb.Key, value *pb.Value) <-chan *pb.Pair {
 		defer close(o)
 
 		for _, word := range strings.Fields(value.GetValue()) {
-			time.Sleep(10 * time.Millisecond) // FIXME
+			// time.Sleep(10 * time.Millisecond) // FIXME
 			o <- &pb.Pair{Key: &pb.Key{Key: word}, Value: &pb.Value{Value: "1"}}
 		}
 	}()

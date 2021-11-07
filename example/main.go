@@ -27,7 +27,7 @@ func main() {
 			Out: &api.OutputSpec{
 				OutputPartitions: 2,
 				OutputLocation:   "/mnt/d/workspace/s2/3/mapreduce/example/output/",
-				OutputFormat:     format,
+				OutputFormat:     &api.FileFormat{Format: api.FileFormat_CSV},
 			},
 		},
 	}

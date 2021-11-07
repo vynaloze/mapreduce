@@ -5,10 +5,11 @@ import (
 	"fmt"
 	external "github.com/vynaloze/mapreduce/api"
 	internal "github.com/vynaloze/mapreduce/engine/api"
+	mrio "github.com/vynaloze/mapreduce/engine/io"
 	"google.golang.org/grpc"
 	"io"
 	"log"
-	"time"
+	"strconv"
 )
 
 type reduceWorkerServer struct {
@@ -19,29 +20,60 @@ type reduceWorkerServer struct {
 
 func (r *reduceWorkerServer) Reduce(task *internal.ReduceTask, stream internal.ReduceWorker_ReduceServer) error {
 	log.Printf("received reduce task: %+v", task)
-	for i := 0; i < 2; i++ {
+	spec := task.GetOutputSpec()
+	switch format := spec.GetOutputFormat().GetFormat(); format {
+	case external.FileFormat_CSV:
+		filename := fmt.Sprintf("%s%04d.csv", spec.GetOutputLocation(), task.GetPartition())
+		h := mrio.CsvHandler{Filename: filename}
+		if err := r.reduce(&h); err != nil {
+			return err
+		}
 		rts := internal.ReduceTaskStatus{
 			Result: &external.DFSFile{
-				Location:  fmt.Sprintf("foo_%d", i),
-				Format:    &external.FileFormat{Format: external.FileFormat_TEXT},
-				SizeBytes: 0,
+				Location: filename,
+				Format:   spec.GetOutputFormat(),
 			},
 		}
 		if err := stream.Send(&rts); err != nil {
 			return err
 		}
-		time.Sleep(5 * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("unsupported output format: %+v", format)
+	}
+}
+
+func (r *reduceWorkerServer) reduce(handler mrio.Handler) error {
+	for k, vals := range r.data {
+		log.Printf("reduce for key " + k)
+		err := r.reduceOne(handler, k, vals)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
+func (r *reduceWorkerServer) reduceOne(handler mrio.Handler, k string, vals []string) error {
+	wc := WordCount{}
+	valsChan := make(chan *internal.Value, len(vals))
+	go func() {
+		for _, val := range vals {
+			valsChan <- &internal.Value{Value: val}
+		}
+		close(valsChan)
+	}()
+	res := wc.Reduce(&internal.Key{Key: k}, valsChan)
+	handler.Write(res)
+	return nil
+}
+
 func (r *reduceWorkerServer) Notify(stream internal.ReduceWorker_NotifyServer) error {
-	log.Printf("notify")
+	log.Printf("start downloading intermediate data")
 	missingRegions := make([]*internal.Region, 0)
 	for {
 		region, err := stream.Recv()
 		if err == io.EOF {
-			log.Printf("data: %v", r.data)
 			return stream.SendAndClose(&internal.MissingRegions{Regions: missingRegions})
 		}
 		if err != nil {
@@ -83,23 +115,23 @@ func (r *reduceWorkerServer) getFromMapWorker(region *internal.Region) error {
 	return nil
 }
 
-//func (w *WordCount) Reduce(key string, values[]string) <-chan string {
-//	// key: a word
-//	// values: a list of counts
-//	o := make(chan string)
-//	go func() {
-//		defer close(o)
-//
-//		var result int
-//		for v := range values {
-//			i, err := strconv.Atoi(v)
-//			if err != nil {
-//				panic(err)
-//			}
-//			result += i
-//		}
-//
-//		o <- strconv.Itoa(result)
-//	}()
-//	return o
-//}
+func (w *WordCount) Reduce(key *internal.Key, values <-chan *internal.Value) <-chan *internal.Pair {
+	// key: a word
+	// values: a list of counts
+	o := make(chan *internal.Pair)
+	go func() {
+		defer close(o)
+
+		var result int
+		for v := range values {
+			i, err := strconv.Atoi(v.GetValue())
+			if err != nil {
+				panic(err)
+			}
+			result += i
+		}
+
+		o <- &internal.Pair{Key: key, Value: &internal.Value{Value: strconv.Itoa(result)}}
+	}()
+	return o
+}

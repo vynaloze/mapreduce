@@ -78,3 +78,7 @@ func (t *TextHandler) Read(split *internal.Split) <-chan *internal.Pair {
 	}()
 	return c
 }
+
+func (t *TextHandler) Write(pairs <-chan *internal.Pair) {
+	panic("not implemented yet")
+}

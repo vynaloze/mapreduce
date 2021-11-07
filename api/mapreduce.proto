@@ -6,6 +6,7 @@ option go_package = "github.com/vynaloze/mapreduce/api";
 message FileFormat {
   enum Format {
     TEXT = 0;
+    CSV = 1;
   }
   Format format = 2;
 }

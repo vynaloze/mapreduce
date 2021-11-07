@@ -58,6 +58,7 @@ func (s *scheduler) handleJob(job *external.Job) {
 		reduceRegions[i] = rr
 		rt.Regions <- rr
 	}
+	close(reduceTasksChan)
 	rerunMapTasks := make(chan string)
 	reduceTaskResultsChan := make(chan *internal.ReduceTaskStatus)
 	go s.controller.ProcessReduceTasks(reduceTasksChan, rerunMapTasks, reduceTaskResultsChan)

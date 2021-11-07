@@ -27,6 +27,7 @@ func (c *controller) ProcessReduceTasks(tasks <-chan *ReduceTask, rerunMapTasks 
 		go c.processReduceTasks(&wg, tasks, rerunMapTasks, results)
 	}
 	wg.Wait()
+	log.Printf("finished reduce processing")
 	close(rerunMapTasks)
 	close(results)
 }
