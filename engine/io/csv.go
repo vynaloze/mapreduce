@@ -1,6 +1,7 @@
 package io
 
 import (
+	"bufio"
 	"fmt"
 	external "github.com/vynaloze/mapreduce/api"
 	internal "github.com/vynaloze/mapreduce/engine/api"
@@ -13,15 +14,16 @@ type CsvHandler struct {
 }
 
 func (c *CsvHandler) Write(pairs <-chan *internal.Pair) {
-	f, err := os.Create(c.Filename)
+	f, err := os.OpenFile(c.Filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("cannot open file for writing: %s", err)
 	}
 	defer f.Close()
-	defer f.Sync()
+	w := bufio.NewWriter(f)
+	defer w.Flush()
 
 	for pair := range pairs {
-		_, err := f.WriteString(fmt.Sprintf("%s,%s\n", pair.GetKey().GetKey(), pair.GetValue().GetValue()))
+		_, err := w.WriteString(fmt.Sprintf("%s,%s\n", pair.GetKey().GetKey(), pair.GetValue().GetValue()))
 		if err != nil {
 			log.Fatalf("cannot write to file: %s", err)
 		}

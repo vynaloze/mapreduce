@@ -106,8 +106,11 @@ func (w *WordCount) Map(key *pb.Key, value *pb.Value) <-chan *pb.Pair {
 		defer close(o)
 
 		for _, word := range strings.Fields(value.GetValue()) {
+			k := strings.ReplaceAll(word, ",", "")
+			kk := strings.ReplaceAll(k, ".", "")
+
 			// time.Sleep(10 * time.Millisecond) // FIXME
-			o <- &pb.Pair{Key: &pb.Key{Key: word}, Value: &pb.Value{Value: "1"}}
+			o <- &pb.Pair{Key: &pb.Key{Key: kk}, Value: &pb.Value{Value: "1"}}
 		}
 	}()
 	return o

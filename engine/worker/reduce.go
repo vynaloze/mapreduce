@@ -45,7 +45,6 @@ func (r *reduceWorkerServer) Reduce(task *internal.ReduceTask, stream internal.R
 
 func (r *reduceWorkerServer) reduce(handler mrio.Handler) error {
 	for k, vals := range r.data {
-		log.Printf("reduce for key " + k)
 		err := r.reduceOne(handler, k, vals)
 		if err != nil {
 			return err
