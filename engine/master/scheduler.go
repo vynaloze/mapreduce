@@ -27,7 +27,6 @@ func (s *scheduler) handleJob(job *external.Job) {
 	s.notify(fmt.Sprintf("produced %d splits", len(splits)))
 
 	s.notify("start map phase")
-	mapInProgress := sync.Mutex{}
 	mapTasks := make(map[string]*internal.MapTask)
 	initialMapTasksChan := make(chan *internal.MapTask, len(splits))
 	for i := range splits {
@@ -41,7 +40,6 @@ func (s *scheduler) handleJob(job *external.Job) {
 	initialBatch := make(chan *internal.MapTaskStatus)
 	mapTaskResultsBatches <- initialBatch
 	go s.controller.ProcessMapTasks(initialMapTasksChan, initialBatch)
-	mapInProgress.Lock()
 
 	s.notify("prepare reduce phase")
 	reduceTasks := make(map[int64]*controller.ReduceTask, job.GetSpec().GetOut().GetOutputPartitions())
@@ -68,7 +66,6 @@ func (s *scheduler) handleJob(job *external.Job) {
 	mux := sync.Mutex{}
 	go func() {
 		for rerunMapTask := range rerunMapTasks {
-			mapInProgress.Lock()
 			mux.Lock()
 			log.Printf("map worker failure during reduce phase: reruning tasks %+v", rerunMapTask)
 			// clear results with failed task
@@ -140,7 +137,6 @@ func (s *scheduler) handleJob(job *external.Job) {
 			for p, rt := range reduceTasks {
 				rt.Regions <- reduceRegions[p]
 			}
-			mapInProgress.Unlock()
 		}
 	}()
 
