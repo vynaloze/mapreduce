@@ -13,7 +13,7 @@ type CsvHandler struct {
 	Filename string
 }
 
-func (c *CsvHandler) Write(pairs <-chan *internal.Pair) {
+func (c *CsvHandler) Write(pairs <-chan *external.Pair) {
 	f, err := os.OpenFile(c.Filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("cannot open file for writing: %s", err)
@@ -30,7 +30,7 @@ func (c *CsvHandler) Write(pairs <-chan *internal.Pair) {
 	}
 }
 
-func (c *CsvHandler) Read(split *internal.Split) <-chan *internal.Pair {
+func (c *CsvHandler) Read(split *internal.Split) <-chan *external.Pair {
 	panic("not implemented yet")
 }
 

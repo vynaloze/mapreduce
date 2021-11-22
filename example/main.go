@@ -1,15 +1,17 @@
 package main
 
 import (
-	"context"
 	"github.com/vynaloze/mapreduce/api"
-	"google.golang.org/grpc"
-	"io"
-	"log"
-	"time"
+	"github.com/vynaloze/mapreduce/client"
 )
 
 func main() {
+	c := client.New()
+
+	c.RegisterMapper(client.MapperEntry{Name: "wordcount", Mapper: &WordCount{}})
+	c.RegisterReducer(client.ReducerEntry{Name: "adder", Reducer: &Adder{}})
+
+
 	format := &api.FileFormat{Format: api.FileFormat_TEXT}
 
 	job := api.Job{
@@ -29,32 +31,10 @@ func main() {
 				OutputLocation:   "/mnt/d/workspace/s2/3/mapreduce/example/output/",
 				OutputFormat:     &api.FileFormat{Format: api.FileFormat_CSV},
 			},
+			Mapper: "wordcount",
+			Reducer: "adder",
 		},
 	}
 
-	// TODO this boilerplate should go to client package
-	conn, err := grpc.Dial(":50050", grpc.WithInsecure(), grpc.FailOnNonTempDialError(true), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("could not connect: %v", err)
-	}
-	defer conn.Close()
-	c := api.NewMasterClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Hour) //TODO correct timeout
-	defer cancel()
-	stream, err := c.Submit(ctx, &job)
-	if err != nil {
-		log.Fatalf("could not register: %v", err)
-	}
-
-	for {
-		status, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatalf("%v.Submit(_) = _, %v", c, err)
-		}
-		log.Println(status)
-	}
+	c.SubmitAndWait(&job)
 }

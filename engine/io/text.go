@@ -46,8 +46,8 @@ func addSplitsForFile(spec *external.InputSpec, file *external.DFSFile, splits [
 	return splits
 }
 
-func (t *TextHandler) Read(split *internal.Split) <-chan *internal.Pair {
-	c := make(chan *internal.Pair)
+func (t *TextHandler) Read(split *internal.Split) <-chan *external.Pair {
+	c := make(chan *external.Pair)
 	go func() {
 		defer close(c)
 
@@ -66,7 +66,7 @@ func (t *TextHandler) Read(split *internal.Split) <-chan *internal.Pair {
 
 		offset := split.Offset
 		for scanner.Scan() {
-			c <- &internal.Pair{Key: &internal.Key{Key: strconv.FormatInt(offset, 10)}, Value: &internal.Value{Value: scanner.Text()}}
+			c <- &external.Pair{Key: &external.Key{Key: strconv.FormatInt(offset, 10)}, Value: &external.Value{Value: scanner.Text()}}
 			offset += int64(len(scanner.Bytes())) + 1
 			if offset >= split.Limit {
 				break
@@ -79,6 +79,6 @@ func (t *TextHandler) Read(split *internal.Split) <-chan *internal.Pair {
 	return c
 }
 
-func (t *TextHandler) Write(pairs <-chan *internal.Pair) {
+func (t *TextHandler) Write(pairs <-chan *external.Pair) {
 	panic("not implemented yet")
 }

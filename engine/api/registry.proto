@@ -2,6 +2,8 @@ syntax = "proto3";
 
 option go_package = "github.com/vynaloze/mapreduce/engine/api";
 
+import "api/mapreduce.proto";
+
 service Registry {
   rpc Register (RegisterRequest) returns (RegisterReply) {}
 }
@@ -10,8 +12,14 @@ message RegisterRequest {
   string addr = 1;
   string uuid = 2;
   int64 ttl_seconds = 3;
+
+  repeated string mappers = 4;
+  repeated string reducers = 5;
 }
 
 message RegisterReply {
-  // intentionally empty
+  repeated string mappers = 1;
+  repeated string reducers = 2;
+
+  MapReduceExecutable executable = 3;
 }

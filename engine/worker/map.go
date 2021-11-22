@@ -2,7 +2,8 @@ package worker
 
 import (
 	"fmt"
-	pb "github.com/vynaloze/mapreduce/engine/api"
+	external "github.com/vynaloze/mapreduce/api"
+	internal "github.com/vynaloze/mapreduce/engine/api"
 	"github.com/vynaloze/mapreduce/engine/io"
 	"hash/fnv"
 	"log"
@@ -14,7 +15,7 @@ import (
 const bufferSizePerPartition = 1000
 
 type mapWorkerServer struct {
-	pb.UnimplementedMapWorkerServer
+	internal.UnimplementedMapWorkerServer
 	addr string
 
 	taskPartitions map[string]*taskPartitions
@@ -22,15 +23,15 @@ type mapWorkerServer struct {
 }
 
 type taskPartitions struct {
-	partitions map[int64]chan *pb.Pair
+	partitions map[int64]chan *external.Pair
 	mux        sync.RWMutex
 }
 
-func (s *mapWorkerServer) Map(task *pb.MapTask, stream pb.MapWorker_MapServer) error {
+func (s *mapWorkerServer) Map(task *internal.MapTask, stream internal.MapWorker_MapServer) error {
 	log.Printf("received map task: %+v", task)
 
 	s.mux.Lock()
-	s.taskPartitions[task.GetId()] = &taskPartitions{partitions: make(map[int64]chan *pb.Pair)}
+	s.taskPartitions[task.GetId()] = &taskPartitions{partitions: make(map[int64]chan *external.Pair)}
 	s.mux.Unlock()
 	defer s.cleanup(task.GetId())
 
@@ -51,15 +52,15 @@ func (s *mapWorkerServer) Map(task *pb.MapTask, stream pb.MapWorker_MapServer) e
 			partitions.mux.RUnlock()
 			if !ok {
 				// new partition
-				c := make(chan *pb.Pair, bufferSizePerPartition)
+				c := make(chan *external.Pair, bufferSizePerPartition)
 				//defer close(c)
 				partitions.mux.Lock()
 				partitions.partitions[partition] = c
 				partitions.mux.Unlock()
 
-				mts := pb.MapTaskStatus{
+				mts := internal.MapTaskStatus{
 					Task: task,
-					Region: &pb.Region{
+					Region: &internal.Region{
 						Addr:      s.addr,
 						Partition: partition,
 						TaskId:    task.GetId(),
@@ -89,7 +90,7 @@ func (tp *taskPartitions) cleanup() {
 	}
 }
 
-func (s *mapWorkerServer) Get(region *pb.Region, stream pb.MapWorker_GetServer) error {
+func (s *mapWorkerServer) Get(region *internal.Region, stream internal.MapWorker_GetServer) error {
 	s.mux.RLock()
 	ps, ok := s.taskPartitions[region.GetTaskId()]
 	if !ok {
@@ -119,10 +120,10 @@ func hash(s string, r int64) int64 {
 
 type WordCount struct{}
 
-func (w *WordCount) Map(key *pb.Key, value *pb.Value) <-chan *pb.Pair {
+func (w *WordCount) Map(key *external.Key, value *external.Value) <-chan *external.Pair {
 	// key: document name
 	// value: document contents
-	o := make(chan *pb.Pair)
+	o := make(chan *external.Pair)
 	go func() {
 		defer close(o)
 
@@ -130,7 +131,7 @@ func (w *WordCount) Map(key *pb.Key, value *pb.Value) <-chan *pb.Pair {
 			k := strings.ReplaceAll(word, ",", "")
 			kk := strings.ReplaceAll(k, ".", "")
 
-			o <- &pb.Pair{Key: &pb.Key{Key: kk}, Value: &pb.Value{Value: "1"}}
+			o <- &external.Pair{Key: &external.Key{Key: kk}, Value: &external.Value{Value: "1"}}
 		}
 		time.Sleep(2000 * time.Millisecond) // FIXME
 	}()
