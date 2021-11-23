@@ -6,11 +6,11 @@ import (
 )
 
 type InputReader interface {
-	Read(split *internal.Split) <-chan *internal.Pair
+	Read(split *internal.Split) <-chan *external.Pair
 }
 
 type OutputWriter interface {
-	Write(pairs <-chan *internal.Pair)
+	Write(pairs <-chan *external.Pair)
 }
 
 type Handler interface {

@@ -4,6 +4,7 @@ package api
 
 import (
 	context "context"
+	api "github.com/vynaloze/mapreduce/api"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -78,7 +79,7 @@ func (c *mapWorkerClient) Get(ctx context.Context, in *Region, opts ...grpc.Call
 }
 
 type MapWorker_GetClient interface {
-	Recv() (*Pair, error)
+	Recv() (*api.Pair, error)
 	grpc.ClientStream
 }
 
@@ -86,8 +87,8 @@ type mapWorkerGetClient struct {
 	grpc.ClientStream
 }
 
-func (x *mapWorkerGetClient) Recv() (*Pair, error) {
-	m := new(Pair)
+func (x *mapWorkerGetClient) Recv() (*api.Pair, error) {
+	m := new(api.Pair)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -156,7 +157,7 @@ func _MapWorker_Get_Handler(srv interface{}, stream grpc.ServerStream) error {
 }
 
 type MapWorker_GetServer interface {
-	Send(*Pair) error
+	Send(*api.Pair) error
 	grpc.ServerStream
 }
 
@@ -164,7 +165,7 @@ type mapWorkerGetServer struct {
 	grpc.ServerStream
 }
 
-func (x *mapWorkerGetServer) Send(m *Pair) error {
+func (x *mapWorkerGetServer) Send(m *api.Pair) error {
 	return x.ServerStream.SendMsg(m)
 }
 

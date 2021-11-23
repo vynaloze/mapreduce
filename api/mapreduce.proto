@@ -32,8 +32,8 @@ message Spec {
   InputSpec in = 1;
   OutputSpec out = 2;
 
-  // TODO mapper
-  // TODO reducer
+  //TODO string mapper = 3;
+  //TODO string reducer = 4;
 
   // TODO params
 }
@@ -49,4 +49,41 @@ message JobStatus {
 
 service Master {
   rpc Submit(Job) returns (stream JobStatus) {}
+}
+
+
+
+
+message MapReduceExecutable {
+  repeated string mappers = 1;
+  repeated string reducers = 2;
+  bytes executable = 3;
+}
+
+message Empty {
+}
+
+service MapReduceRegistry {
+  rpc Register(MapReduceExecutable) returns (Empty) {}
+}
+
+
+
+
+message Key {
+  string key = 1;
+}
+
+message Value {
+  string value = 1;
+}
+
+message Pair {
+  Key key = 1;
+  Value value = 2;
+}
+
+service MapReduce {
+  rpc Map(Pair) returns (stream Pair) {}
+  rpc Reduce(stream Pair) returns (stream Pair) {}
 }

@@ -56,14 +56,14 @@ func (r *reduceWorkerServer) reduce(handler mrio.Handler) error {
 
 func (r *reduceWorkerServer) reduceOne(handler mrio.Handler, k string, vals []string) error {
 	wc := WordCount{}
-	valsChan := make(chan *internal.Value, len(vals))
+	valsChan := make(chan *external.Value, len(vals))
 	go func() {
 		for _, val := range vals {
-			valsChan <- &internal.Value{Value: val}
+			valsChan <- &external.Value{Value: val}
 		}
 		close(valsChan)
 	}()
-	res := wc.Reduce(&internal.Key{Key: k}, valsChan)
+	res := wc.Reduce(&external.Key{Key: k}, valsChan)
 	handler.Write(res)
 	return nil
 }
@@ -117,10 +117,10 @@ func (r *reduceWorkerServer) getFromMapWorker(region *internal.Region) error {
 	return nil
 }
 
-func (w *WordCount) Reduce(key *internal.Key, values <-chan *internal.Value) <-chan *internal.Pair {
+func (w *WordCount) Reduce(key *external.Key, values <-chan *external.Value) <-chan *external.Pair {
 	// key: a word
 	// values: a list of counts
-	o := make(chan *internal.Pair)
+	o := make(chan *external.Pair)
 	go func() {
 		defer close(o)
 
@@ -134,7 +134,7 @@ func (w *WordCount) Reduce(key *internal.Key, values <-chan *internal.Value) <-c
 		}
 		time.Sleep(100 * time.Millisecond) //FIXME
 
-		o <- &internal.Pair{Key: key, Value: &internal.Value{Value: strconv.Itoa(result)}}
+		o <- &external.Pair{Key: key, Value: &external.Value{Value: strconv.Itoa(result)}}
 	}()
 	return o
 }
