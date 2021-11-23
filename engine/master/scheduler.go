@@ -53,7 +53,7 @@ func (s *scheduler) handleJob(job *external.Job) {
 	rerunReduce := make(chan int64)
 	for i := int64(0); i < job.GetSpec().GetOut().GetOutputPartitions(); i++ {
 		rt := &controller.ReduceTask{
-			Task:        &internal.ReduceTask{OutputSpec: job.GetSpec().GetOut(), Partition: i, Reducer: job.GetSpec().GetMapper()},
+			Task:        &internal.ReduceTask{OutputSpec: job.GetSpec().GetOut(), Partition: i, Reducer: job.GetSpec().GetReducer()},
 			Regions:     make(chan []*internal.Region, 1),
 			RerunReduce: rerunReduce,
 		}

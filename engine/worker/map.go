@@ -1,13 +1,14 @@
 package worker
 
 import (
+	"context"
 	"fmt"
 	external "github.com/vynaloze/mapreduce/api"
 	internal "github.com/vynaloze/mapreduce/engine/api"
-	"github.com/vynaloze/mapreduce/engine/io"
+	mrio "github.com/vynaloze/mapreduce/engine/io"
 	"hash/fnv"
+	"io"
 	"log"
-	"strings"
 	"sync"
 	"time"
 )
@@ -35,11 +36,15 @@ func (s *mapWorkerServer) Map(task *internal.MapTask, stream internal.MapWorker_
 	s.mux.Unlock()
 	defer s.cleanup(task.GetId())
 
-	wc := &WordCount{}
-	th := &io.TextHandler{}
+	th := &mrio.TextHandler{}
+
+	for mrs == nil || mrs.client == nil {
+		log.Printf("waiting for map function to be ready")
+		time.Sleep(1 * time.Second)
+	}
 
 	for inputPair := range th.Read(task.GetInputSplit()) {
-		intermediatePairs := wc.Map(inputPair.GetKey(), inputPair.GetValue())
+		intermediatePairs := mrs.Map(inputPair.GetKey(), inputPair.GetValue())
 		for pair := range intermediatePairs {
 			partition := hash(pair.GetKey().GetKey(), task.GetPartitions())
 
@@ -118,22 +123,25 @@ func hash(s string, r int64) int64 {
 	return int64(h.Sum64() % uint64(r))
 }
 
-type WordCount struct{}
-
-func (w *WordCount) Map(key *external.Key, value *external.Value) <-chan *external.Pair {
-	// key: document name
-	// value: document contents
+func (mr *mapReduceServer) Map(key *external.Key, value *external.Value) <-chan *external.Pair {
 	o := make(chan *external.Pair)
 	go func() {
 		defer close(o)
+		stream, err := mr.client.Map(context.TODO(), &external.Pair{Key: key, Value: value})
 
-		for _, word := range strings.Fields(value.GetValue()) {
-			k := strings.ReplaceAll(word, ",", "")
-			kk := strings.ReplaceAll(k, ".", "")
-
-			o <- &external.Pair{Key: &external.Key{Key: kk}, Value: &external.Value{Value: "1"}}
+		if err != nil {
+			log.Fatalf("error calling internal Map: %s", err)
 		}
-		time.Sleep(2000 * time.Millisecond) // FIXME
+		for {
+			pair, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("%v.Map(_) = _, %v", mr.client, err)
+			}
+			o <- pair
+		}
 	}()
 	return o
 }

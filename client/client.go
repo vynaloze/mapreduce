@@ -14,8 +14,8 @@ type Client interface {
 }
 
 type client struct {
-	mappers  []MapperEntry
-	reducers []ReducerEntry
+	mapper  *MapperEntry
+	reducer *ReducerEntry
 
 	masterClient            api.MasterClient
 	mapReduceRegistryClient api.MapReduceRegistryClient
@@ -29,8 +29,6 @@ func New() Client {
 	//defer conn.Close()
 
 	return &client{
-		mappers:                 make([]MapperEntry, 0),
-		reducers:                make([]ReducerEntry, 0),
 		masterClient:            api.NewMasterClient(conn),
 		mapReduceRegistryClient: api.NewMapReduceRegistryClient(conn),
 	}

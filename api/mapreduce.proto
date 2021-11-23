@@ -4,8 +4,8 @@ option go_package = "github.com/vynaloze/mapreduce/api";
 
 
 message MapReduceExecutable {
-  repeated string mappers = 1;
-  repeated string reducers = 2;
+  string mapper = 1;
+  string reducer = 2;
   bytes executable = 3;
 }
 

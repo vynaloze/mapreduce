@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -55,7 +54,6 @@ func (r *reduceWorkerServer) reduce(handler mrio.Handler) error {
 }
 
 func (r *reduceWorkerServer) reduceOne(handler mrio.Handler, k string, vals []string) error {
-	wc := WordCount{}
 	valsChan := make(chan *external.Value, len(vals))
 	go func() {
 		for _, val := range vals {
@@ -63,7 +61,11 @@ func (r *reduceWorkerServer) reduceOne(handler mrio.Handler, k string, vals []st
 		}
 		close(valsChan)
 	}()
-	res := wc.Reduce(&external.Key{Key: k}, valsChan)
+	for mrs == nil || mrs.client == nil {
+		log.Printf("waiting for reduce function to be ready")
+		time.Sleep(1 * time.Second)
+	}
+	res := mrs.Reduce(&external.Key{Key: k}, valsChan)
 	handler.Write(res)
 	return nil
 }
@@ -117,24 +119,35 @@ func (r *reduceWorkerServer) getFromMapWorker(region *internal.Region) error {
 	return nil
 }
 
-func (w *WordCount) Reduce(key *external.Key, values <-chan *external.Value) <-chan *external.Pair {
-	// key: a word
-	// values: a list of counts
+func (mr *mapReduceServer) Reduce(key *external.Key, values <-chan *external.Value) <-chan *external.Pair {
 	o := make(chan *external.Pair)
 	go func() {
 		defer close(o)
-
-		var result int
-		for v := range values {
-			i, err := strconv.Atoi(v.GetValue())
-			if err != nil {
-				panic(err)
-			}
-			result += i
+		stream, err := mr.client.Reduce(context.TODO())
+		if err != nil {
+			log.Fatalf("error calling internal Reduce: %s", err)
 		}
-		time.Sleep(100 * time.Millisecond) //FIXME
-
-		o <- &external.Pair{Key: key, Value: &external.Value{Value: strconv.Itoa(result)}}
+		waitc := make(chan struct{})
+		go func() {
+			for {
+				pair, err := stream.Recv()
+				if err == io.EOF {
+					close(waitc)
+					return
+				}
+				if err != nil {
+					log.Fatalf("%v.Reduce(_) = _, %v", mr.client, err)
+				}
+				o <- pair
+			}
+		}()
+		for v := range values {
+			if err = stream.Send(&external.Pair{Key: key, Value: v}); err != nil {
+				log.Fatalf("Failed to send a pair to Reduce: %v", err)
+			}
+		}
+		stream.CloseSend()
+		<-waitc
 	}()
 	return o
 }

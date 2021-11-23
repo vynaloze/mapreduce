@@ -3,20 +3,16 @@ package client
 import (
 	"context"
 	"flag"
+	"fmt"
 	"github.com/vynaloze/mapreduce/api"
+	"google.golang.org/grpc"
 	"log"
+	"net"
 	"os"
 	"time"
 )
 
 func (c *client) registerThisExecutable() error {
-	mapperNames, reducerNames := make([]string, 0), make([]string, 0)
-	for _, m := range c.mappers {
-		mapperNames = append(mapperNames, m.Name)
-	}
-	for _, r := range c.reducers {
-		reducerNames = append(reducerNames, r.Name)
-	}
 	executable, err := os.Executable()
 	if err != nil {
 		return err
@@ -24,8 +20,8 @@ func (c *client) registerThisExecutable() error {
 	executableBytes, err := os.ReadFile(executable)
 
 	msg := api.MapReduceExecutable{
-		Mappers:    mapperNames,
-		Reducers:   reducerNames,
+		Mapper:     c.mapper.Name,
+		Reducer:    c.reducer.Name,
 		Executable: executableBytes,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
@@ -34,13 +30,22 @@ func (c *client) registerThisExecutable() error {
 	return err
 }
 
-func init() {
+func startMapReduceServer(c *client) {
 	var port int
 	flag.IntVar(&port, "mapreduce-port", 0, "port to serve mapreduce on")
 	flag.Parse()
 
 	if port != 0 {
 		log.Printf("starting mapreduce on %d", port)
-		//TODO start mapreduce
+		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+		s := grpc.NewServer()
+		api.RegisterMapReduceServer(s, &mapReduceServer{client: c})
+		log.Printf("mapReduceServer listening at %v", lis.Addr())
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
 	}
 }

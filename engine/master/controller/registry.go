@@ -31,19 +31,26 @@ func newRegistryServer() *registryServer {
 }
 
 func (s *registryServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterReply, error) {
+	reply := &pb.RegisterReply{}
+
 	missingExecutables := s.getMissingExecutables(in)
 	if len(missingExecutables) > 0 {
 		log.Printf("sending executables %+v to worker %s", missingExecutables, in.GetUuid())
+		reply.Mappers = make([]string, 0)
+		reply.Reducers = make([]string, 0)
+		s.mux.RLock()
 		for _, idx := range missingExecutables {
-			// TODO send executalbe
-			log.Println(idx)
+			reply.Mappers = append(reply.Mappers, s.executables[idx].Mapper)
+			reply.Reducers = append(reply.Reducers, s.executables[idx].Reducer)
+			reply.Executable = s.executables[idx] //FIXME this is wrong but whatever
 		}
+		s.mux.RUnlock()
 	}
 
 	w := Worker{Uuid: in.GetUuid(), Addr: in.GetAddr(), ExpiresOn: time.Now().Add(time.Second * time.Duration(in.GetTtlSeconds()))}
-	//log.Printf("Received Register: %v\n", w)
 	s.workers <- w
-	return &pb.RegisterReply{}, nil
+
+	return reply, nil
 }
 
 func (s *registryServer) serve(lis net.Listener, serv *grpc.Server) <-chan Worker {
@@ -66,19 +73,14 @@ func (s *registryServer) getMissingExecutables(in *pb.RegisterRequest) []int {
 
 	missing := make([]int, 0)
 
-Outer:
 	for i := range s.executables {
-		for _, m := range s.executables[i].GetMappers() {
-			if !contains(m, in.GetMappers()) {
-				missing = append(missing, i)
-				continue Outer
-			}
+		if !contains(s.executables[i].GetMapper(), in.GetMappers()) {
+			missing = append(missing, i)
+			continue
 		}
-		for _, r := range s.executables[i].GetReducers() {
-			if !contains(r, in.GetReducers()) {
-				missing = append(missing, i)
-				continue Outer
-			}
+		if !contains(s.executables[i].GetReducer(), in.GetReducers()) {
+			missing = append(missing, i)
+			continue
 		}
 	}
 	return missing
