@@ -30,7 +30,12 @@ func (s *scheduler) handleJob(job *external.Job) {
 	mapTasks := make(map[string]*internal.MapTask)
 	initialMapTasksChan := make(chan *internal.MapTask, len(splits))
 	for i := range splits {
-		mt := &internal.MapTask{Id: uuid.New().String(), InputSplit: &splits[i], Partitions: job.GetSpec().GetOut().GetOutputPartitions()}
+		mt := &internal.MapTask{
+			Id:         uuid.New().String(),
+			InputSplit: &splits[i],
+			Partitions: job.GetSpec().GetOut().GetOutputPartitions(),
+			Mapper:     job.GetSpec().GetMapper(),
+		}
 		mapTasks[mt.GetId()] = mt
 		initialMapTasksChan <- mt
 	}
@@ -48,7 +53,7 @@ func (s *scheduler) handleJob(job *external.Job) {
 	rerunReduce := make(chan int64)
 	for i := int64(0); i < job.GetSpec().GetOut().GetOutputPartitions(); i++ {
 		rt := &controller.ReduceTask{
-			Task:        &internal.ReduceTask{OutputSpec: job.GetSpec().GetOut(), Partition: i},
+			Task:        &internal.ReduceTask{OutputSpec: job.GetSpec().GetOut(), Partition: i, Reducer: job.GetSpec().GetMapper()},
 			Regions:     make(chan []*internal.Region, 1),
 			RerunReduce: rerunReduce,
 		}

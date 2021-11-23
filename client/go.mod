@@ -1,9 +1,8 @@
-module github.com/vynaloze/mapreduce/example
+module github.com/vynaloze/mapreduce/client
 
 go 1.17
 
 require github.com/vynaloze/mapreduce/api v0.0.0
-require github.com/vynaloze/mapreduce/client v0.0.0
 
 require (
 	github.com/golang/protobuf v1.5.0 // indirect
@@ -16,4 +15,3 @@ require (
 )
 
 replace github.com/vynaloze/mapreduce/api v0.0.0 => ../api
-replace github.com/vynaloze/mapreduce/client v0.0.0 => ../client

@@ -14,6 +14,7 @@ func Run(addr string) {
 
 	c := controller.New(lis, s)
 	jobs, jobStatus := public.New(lis, s)
+	executables := public.NewMapReduceRegistry(lis, s)
 
 	scheduler := scheduler{
 		c,
@@ -22,6 +23,8 @@ func Run(addr string) {
 
 	for {
 		select {
+		case e := <-executables:
+			c.RegisterNewExecutable(e)
 		case j := <-jobs:
 			scheduler.handleJob(j)
 		default:

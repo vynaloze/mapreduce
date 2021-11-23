@@ -20,437 +20,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type FileFormat_Format int32
-
-const (
-	FileFormat_TEXT FileFormat_Format = 0
-	FileFormat_CSV  FileFormat_Format = 1
-)
-
-// Enum value maps for FileFormat_Format.
-var (
-	FileFormat_Format_name = map[int32]string{
-		0: "TEXT",
-		1: "CSV",
-	}
-	FileFormat_Format_value = map[string]int32{
-		"TEXT": 0,
-		"CSV":  1,
-	}
-)
-
-func (x FileFormat_Format) Enum() *FileFormat_Format {
-	p := new(FileFormat_Format)
-	*p = x
-	return p
-}
-
-func (x FileFormat_Format) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (FileFormat_Format) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_mapreduce_proto_enumTypes[0].Descriptor()
-}
-
-func (FileFormat_Format) Type() protoreflect.EnumType {
-	return &file_api_mapreduce_proto_enumTypes[0]
-}
-
-func (x FileFormat_Format) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use FileFormat_Format.Descriptor instead.
-func (FileFormat_Format) EnumDescriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{0, 0}
-}
-
-type FileFormat struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Format FileFormat_Format `protobuf:"varint,2,opt,name=format,proto3,enum=FileFormat_Format" json:"format,omitempty"`
-}
-
-func (x *FileFormat) Reset() {
-	*x = FileFormat{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *FileFormat) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FileFormat) ProtoMessage() {}
-
-func (x *FileFormat) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FileFormat.ProtoReflect.Descriptor instead.
-func (*FileFormat) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *FileFormat) GetFormat() FileFormat_Format {
-	if x != nil {
-		return x.Format
-	}
-	return FileFormat_TEXT
-}
-
-type DFSFile struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Location  string      `protobuf:"bytes,1,opt,name=location,proto3" json:"location,omitempty"`
-	Format    *FileFormat `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
-	SizeBytes int64       `protobuf:"varint,3,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
-}
-
-func (x *DFSFile) Reset() {
-	*x = DFSFile{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DFSFile) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DFSFile) ProtoMessage() {}
-
-func (x *DFSFile) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DFSFile.ProtoReflect.Descriptor instead.
-func (*DFSFile) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *DFSFile) GetLocation() string {
-	if x != nil {
-		return x.Location
-	}
-	return ""
-}
-
-func (x *DFSFile) GetFormat() *FileFormat {
-	if x != nil {
-		return x.Format
-	}
-	return nil
-}
-
-func (x *DFSFile) GetSizeBytes() int64 {
-	if x != nil {
-		return x.SizeBytes
-	}
-	return 0
-}
-
-type InputSpec struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	InputFiles          []*DFSFile `protobuf:"bytes,1,rep,name=input_files,json=inputFiles,proto3" json:"input_files,omitempty"`
-	InputSplitSizeBytes int64      `protobuf:"varint,2,opt,name=input_split_size_bytes,json=inputSplitSizeBytes,proto3" json:"input_split_size_bytes,omitempty"`
-}
-
-func (x *InputSpec) Reset() {
-	*x = InputSpec{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *InputSpec) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*InputSpec) ProtoMessage() {}
-
-func (x *InputSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use InputSpec.ProtoReflect.Descriptor instead.
-func (*InputSpec) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *InputSpec) GetInputFiles() []*DFSFile {
-	if x != nil {
-		return x.InputFiles
-	}
-	return nil
-}
-
-func (x *InputSpec) GetInputSplitSizeBytes() int64 {
-	if x != nil {
-		return x.InputSplitSizeBytes
-	}
-	return 0
-}
-
-type OutputSpec struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	OutputPartitions int64       `protobuf:"varint,1,opt,name=output_partitions,json=outputPartitions,proto3" json:"output_partitions,omitempty"`
-	OutputLocation   string      `protobuf:"bytes,2,opt,name=output_location,json=outputLocation,proto3" json:"output_location,omitempty"`
-	OutputFormat     *FileFormat `protobuf:"bytes,3,opt,name=output_format,json=outputFormat,proto3" json:"output_format,omitempty"`
-}
-
-func (x *OutputSpec) Reset() {
-	*x = OutputSpec{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *OutputSpec) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OutputSpec) ProtoMessage() {}
-
-func (x *OutputSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OutputSpec.ProtoReflect.Descriptor instead.
-func (*OutputSpec) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *OutputSpec) GetOutputPartitions() int64 {
-	if x != nil {
-		return x.OutputPartitions
-	}
-	return 0
-}
-
-func (x *OutputSpec) GetOutputLocation() string {
-	if x != nil {
-		return x.OutputLocation
-	}
-	return ""
-}
-
-func (x *OutputSpec) GetOutputFormat() *FileFormat {
-	if x != nil {
-		return x.OutputFormat
-	}
-	return nil
-}
-
-type Spec struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	In  *InputSpec  `protobuf:"bytes,1,opt,name=in,proto3" json:"in,omitempty"`
-	Out *OutputSpec `protobuf:"bytes,2,opt,name=out,proto3" json:"out,omitempty"`
-}
-
-func (x *Spec) Reset() {
-	*x = Spec{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Spec) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Spec) ProtoMessage() {}
-
-func (x *Spec) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Spec.ProtoReflect.Descriptor instead.
-func (*Spec) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *Spec) GetIn() *InputSpec {
-	if x != nil {
-		return x.In
-	}
-	return nil
-}
-
-func (x *Spec) GetOut() *OutputSpec {
-	if x != nil {
-		return x.Out
-	}
-	return nil
-}
-
-type Job struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Spec *Spec  `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
-}
-
-func (x *Job) Reset() {
-	*x = Job{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Job) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Job) ProtoMessage() {}
-
-func (x *Job) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Job.ProtoReflect.Descriptor instead.
-func (*Job) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *Job) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *Job) GetSpec() *Spec {
-	if x != nil {
-		return x.Spec
-	}
-	return nil
-}
-
-type JobStatus struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-}
-
-func (x *JobStatus) Reset() {
-	*x = JobStatus{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *JobStatus) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*JobStatus) ProtoMessage() {}
-
-func (x *JobStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use JobStatus.ProtoReflect.Descriptor instead.
-func (*JobStatus) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *JobStatus) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
 type MapReduceExecutable struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -464,7 +33,7 @@ type MapReduceExecutable struct {
 func (x *MapReduceExecutable) Reset() {
 	*x = MapReduceExecutable{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[7]
+		mi := &file_api_mapreduce_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -477,7 +46,7 @@ func (x *MapReduceExecutable) String() string {
 func (*MapReduceExecutable) ProtoMessage() {}
 
 func (x *MapReduceExecutable) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[7]
+	mi := &file_api_mapreduce_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -490,7 +59,7 @@ func (x *MapReduceExecutable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapReduceExecutable.ProtoReflect.Descriptor instead.
 func (*MapReduceExecutable) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{7}
+	return file_api_mapreduce_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *MapReduceExecutable) GetMappers() []string {
@@ -523,7 +92,7 @@ type Empty struct {
 func (x *Empty) Reset() {
 	*x = Empty{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[8]
+		mi := &file_api_mapreduce_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -536,7 +105,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[8]
+	mi := &file_api_mapreduce_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -549,7 +118,7 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{8}
+	return file_api_mapreduce_proto_rawDescGZIP(), []int{1}
 }
 
 type Key struct {
@@ -563,7 +132,7 @@ type Key struct {
 func (x *Key) Reset() {
 	*x = Key{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[9]
+		mi := &file_api_mapreduce_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -576,7 +145,7 @@ func (x *Key) String() string {
 func (*Key) ProtoMessage() {}
 
 func (x *Key) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[9]
+	mi := &file_api_mapreduce_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -589,7 +158,7 @@ func (x *Key) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Key.ProtoReflect.Descriptor instead.
 func (*Key) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{9}
+	return file_api_mapreduce_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Key) GetKey() string {
@@ -610,7 +179,7 @@ type Value struct {
 func (x *Value) Reset() {
 	*x = Value{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[10]
+		mi := &file_api_mapreduce_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -623,7 +192,7 @@ func (x *Value) String() string {
 func (*Value) ProtoMessage() {}
 
 func (x *Value) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[10]
+	mi := &file_api_mapreduce_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -636,7 +205,7 @@ func (x *Value) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Value.ProtoReflect.Descriptor instead.
 func (*Value) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{10}
+	return file_api_mapreduce_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Value) GetValue() string {
@@ -658,7 +227,7 @@ type Pair struct {
 func (x *Pair) Reset() {
 	*x = Pair{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_mapreduce_proto_msgTypes[11]
+		mi := &file_api_mapreduce_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -671,7 +240,7 @@ func (x *Pair) String() string {
 func (*Pair) ProtoMessage() {}
 
 func (x *Pair) ProtoReflect() protoreflect.Message {
-	mi := &file_api_mapreduce_proto_msgTypes[11]
+	mi := &file_api_mapreduce_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -684,7 +253,7 @@ func (x *Pair) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Pair.ProtoReflect.Descriptor instead.
 func (*Pair) Descriptor() ([]byte, []int) {
-	return file_api_mapreduce_proto_rawDescGZIP(), []int{11}
+	return file_api_mapreduce_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Pair) GetKey() *Key {
@@ -705,63 +274,22 @@ var File_api_mapreduce_proto protoreflect.FileDescriptor
 
 var file_api_mapreduce_proto_rawDesc = []byte{
 	0x0a, 0x13, 0x61, 0x70, 0x69, 0x2f, 0x6d, 0x61, 0x70, 0x72, 0x65, 0x64, 0x75, 0x63, 0x65, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x55, 0x0a, 0x0a, 0x46, 0x69, 0x6c, 0x65, 0x46, 0x6f, 0x72,
-	0x6d, 0x61, 0x74, 0x12, 0x2a, 0x0a, 0x06, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x0e, 0x32, 0x12, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x46, 0x6f, 0x72, 0x6d, 0x61, 0x74,
-	0x2e, 0x46, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x52, 0x06, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x22,
-	0x1b, 0x0a, 0x06, 0x46, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x12, 0x08, 0x0a, 0x04, 0x54, 0x45, 0x58,
-	0x54, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x43, 0x53, 0x56, 0x10, 0x01, 0x22, 0x69, 0x0a, 0x07,
-	0x44, 0x46, 0x53, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x6c, 0x6f, 0x63, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6c, 0x6f, 0x63, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x12, 0x23, 0x0a, 0x06, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x46, 0x6f, 0x72, 0x6d, 0x61, 0x74,
-	0x52, 0x06, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x69, 0x7a, 0x65,
-	0x5f, 0x62, 0x79, 0x74, 0x65, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x73, 0x69,
-	0x7a, 0x65, 0x42, 0x79, 0x74, 0x65, 0x73, 0x22, 0x6b, 0x0a, 0x09, 0x49, 0x6e, 0x70, 0x75, 0x74,
-	0x53, 0x70, 0x65, 0x63, 0x12, 0x29, 0x0a, 0x0b, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f, 0x66, 0x69,
-	0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x44, 0x46, 0x53, 0x46,
-	0x69, 0x6c, 0x65, 0x52, 0x0a, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x73, 0x12,
-	0x33, 0x0a, 0x16, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f, 0x73, 0x70, 0x6c, 0x69, 0x74, 0x5f, 0x73,
-	0x69, 0x7a, 0x65, 0x5f, 0x62, 0x79, 0x74, 0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52,
-	0x13, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x53, 0x70, 0x6c, 0x69, 0x74, 0x53, 0x69, 0x7a, 0x65, 0x42,
-	0x79, 0x74, 0x65, 0x73, 0x22, 0x94, 0x01, 0x0a, 0x0a, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x53,
-	0x70, 0x65, 0x63, 0x12, 0x2b, 0x0a, 0x11, 0x6f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x5f, 0x70, 0x61,
-	0x72, 0x74, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x10,
-	0x6f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x50, 0x61, 0x72, 0x74, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x12, 0x27, 0x0a, 0x0f, 0x6f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x5f, 0x6c, 0x6f, 0x63, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x75, 0x74, 0x70, 0x75,
-	0x74, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x30, 0x0a, 0x0d, 0x6f, 0x75, 0x74,
-	0x70, 0x75, 0x74, 0x5f, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x0b, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x46, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x52, 0x0c, 0x6f,
-	0x75, 0x74, 0x70, 0x75, 0x74, 0x46, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x22, 0x41, 0x0a, 0x04, 0x53,
-	0x70, 0x65, 0x63, 0x12, 0x1a, 0x0a, 0x02, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x0a, 0x2e, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x53, 0x70, 0x65, 0x63, 0x52, 0x02, 0x69, 0x6e, 0x12,
-	0x1d, 0x0a, 0x03, 0x6f, 0x75, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x4f,
-	0x75, 0x74, 0x70, 0x75, 0x74, 0x53, 0x70, 0x65, 0x63, 0x52, 0x03, 0x6f, 0x75, 0x74, 0x22, 0x34,
-	0x0a, 0x03, 0x4a, 0x6f, 0x62, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a, 0x04, 0x73, 0x70, 0x65,
-	0x63, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x05, 0x2e, 0x53, 0x70, 0x65, 0x63, 0x52, 0x04,
-	0x73, 0x70, 0x65, 0x63, 0x22, 0x25, 0x0a, 0x09, 0x4a, 0x6f, 0x62, 0x53, 0x74, 0x61, 0x74, 0x75,
-	0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x6b, 0x0a, 0x13, 0x4d,
-	0x61, 0x70, 0x52, 0x65, 0x64, 0x75, 0x63, 0x65, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62,
-	0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x61, 0x70, 0x70, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20,
-	0x03, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x61, 0x70, 0x70, 0x65, 0x72, 0x73, 0x12, 0x1a, 0x0a, 0x08,
-	0x72, 0x65, 0x64, 0x75, 0x63, 0x65, 0x72, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08,
-	0x72, 0x65, 0x64, 0x75, 0x63, 0x65, 0x72, 0x73, 0x12, 0x1e, 0x0a, 0x0a, 0x65, 0x78, 0x65, 0x63,
-	0x75, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0a, 0x65, 0x78,
-	0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x22, 0x07, 0x0a, 0x05, 0x45, 0x6d, 0x70, 0x74,
-	0x79, 0x22, 0x17, 0x0a, 0x03, 0x4b, 0x65, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x22, 0x1d, 0x0a, 0x05, 0x56, 0x61,
-	0x6c, 0x75, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x3c, 0x0a, 0x04, 0x50, 0x61, 0x69,
-	0x72, 0x12, 0x16, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x04,
-	0x2e, 0x4b, 0x65, 0x79, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x1c, 0x0a, 0x05, 0x76, 0x61, 0x6c,
-	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65,
-	0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x32, 0x28, 0x0a, 0x06, 0x4d, 0x61, 0x73, 0x74, 0x65,
-	0x72, 0x12, 0x1e, 0x0a, 0x06, 0x53, 0x75, 0x62, 0x6d, 0x69, 0x74, 0x12, 0x04, 0x2e, 0x4a, 0x6f,
-	0x62, 0x1a, 0x0a, 0x2e, 0x4a, 0x6f, 0x62, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x00, 0x30,
-	0x01, 0x32, 0x3f, 0x0a, 0x11, 0x4d, 0x61, 0x70, 0x52, 0x65, 0x64, 0x75, 0x63, 0x65, 0x52, 0x65,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x6b, 0x0a, 0x13, 0x4d, 0x61, 0x70, 0x52, 0x65, 0x64, 0x75,
+	0x63, 0x65, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07,
+	0x6d, 0x61, 0x70, 0x70, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x6d,
+	0x61, 0x70, 0x70, 0x65, 0x72, 0x73, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x64, 0x75, 0x63, 0x65,
+	0x72, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x64, 0x75, 0x63, 0x65,
+	0x72, 0x73, 0x12, 0x1e, 0x0a, 0x0a, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0a, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x61, 0x62,
+	0x6c, 0x65, 0x22, 0x07, 0x0a, 0x05, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x22, 0x17, 0x0a, 0x03, 0x4b,
+	0x65, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x03, 0x6b, 0x65, 0x79, 0x22, 0x1d, 0x0a, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x14, 0x0a,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61,
+	0x6c, 0x75, 0x65, 0x22, 0x3c, 0x0a, 0x04, 0x50, 0x61, 0x69, 0x72, 0x12, 0x16, 0x0a, 0x03, 0x6b,
+	0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x04, 0x2e, 0x4b, 0x65, 0x79, 0x52, 0x03,
+	0x6b, 0x65, 0x79, 0x12, 0x1c, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x06, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x32, 0x3f, 0x0a, 0x11, 0x4d, 0x61, 0x70, 0x52, 0x65, 0x64, 0x75, 0x63, 0x65, 0x52, 0x65,
 	0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x12, 0x2a, 0x0a, 0x08, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74,
 	0x65, 0x72, 0x12, 0x14, 0x2e, 0x4d, 0x61, 0x70, 0x52, 0x65, 0x64, 0x75, 0x63, 0x65, 0x45, 0x78,
 	0x65, 0x63, 0x75, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x1a, 0x06, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79,
@@ -787,46 +315,28 @@ func file_api_mapreduce_proto_rawDescGZIP() []byte {
 	return file_api_mapreduce_proto_rawDescData
 }
 
-var file_api_mapreduce_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_mapreduce_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_api_mapreduce_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_api_mapreduce_proto_goTypes = []interface{}{
-	(FileFormat_Format)(0),      // 0: FileFormat.Format
-	(*FileFormat)(nil),          // 1: FileFormat
-	(*DFSFile)(nil),             // 2: DFSFile
-	(*InputSpec)(nil),           // 3: InputSpec
-	(*OutputSpec)(nil),          // 4: OutputSpec
-	(*Spec)(nil),                // 5: Spec
-	(*Job)(nil),                 // 6: Job
-	(*JobStatus)(nil),           // 7: JobStatus
-	(*MapReduceExecutable)(nil), // 8: MapReduceExecutable
-	(*Empty)(nil),               // 9: Empty
-	(*Key)(nil),                 // 10: Key
-	(*Value)(nil),               // 11: Value
-	(*Pair)(nil),                // 12: Pair
+	(*MapReduceExecutable)(nil), // 0: MapReduceExecutable
+	(*Empty)(nil),               // 1: Empty
+	(*Key)(nil),                 // 2: Key
+	(*Value)(nil),               // 3: Value
+	(*Pair)(nil),                // 4: Pair
 }
 var file_api_mapreduce_proto_depIdxs = []int32{
-	0,  // 0: FileFormat.format:type_name -> FileFormat.Format
-	1,  // 1: DFSFile.format:type_name -> FileFormat
-	2,  // 2: InputSpec.input_files:type_name -> DFSFile
-	1,  // 3: OutputSpec.output_format:type_name -> FileFormat
-	3,  // 4: Spec.in:type_name -> InputSpec
-	4,  // 5: Spec.out:type_name -> OutputSpec
-	5,  // 6: Job.spec:type_name -> Spec
-	10, // 7: Pair.key:type_name -> Key
-	11, // 8: Pair.value:type_name -> Value
-	6,  // 9: Master.Submit:input_type -> Job
-	8,  // 10: MapReduceRegistry.Register:input_type -> MapReduceExecutable
-	12, // 11: MapReduce.Map:input_type -> Pair
-	12, // 12: MapReduce.Reduce:input_type -> Pair
-	7,  // 13: Master.Submit:output_type -> JobStatus
-	9,  // 14: MapReduceRegistry.Register:output_type -> Empty
-	12, // 15: MapReduce.Map:output_type -> Pair
-	12, // 16: MapReduce.Reduce:output_type -> Pair
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	2, // 0: Pair.key:type_name -> Key
+	3, // 1: Pair.value:type_name -> Value
+	0, // 2: MapReduceRegistry.Register:input_type -> MapReduceExecutable
+	4, // 3: MapReduce.Map:input_type -> Pair
+	4, // 4: MapReduce.Reduce:input_type -> Pair
+	1, // 5: MapReduceRegistry.Register:output_type -> Empty
+	4, // 6: MapReduce.Map:output_type -> Pair
+	4, // 7: MapReduce.Reduce:output_type -> Pair
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_api_mapreduce_proto_init() }
@@ -836,90 +346,6 @@ func file_api_mapreduce_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_api_mapreduce_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FileFormat); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_mapreduce_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DFSFile); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_mapreduce_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*InputSpec); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_mapreduce_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OutputSpec); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_mapreduce_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Spec); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_mapreduce_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Job); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_mapreduce_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*JobStatus); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_api_mapreduce_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MapReduceExecutable); i {
 			case 0:
 				return &v.state
@@ -931,7 +357,7 @@ func file_api_mapreduce_proto_init() {
 				return nil
 			}
 		}
-		file_api_mapreduce_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_api_mapreduce_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Empty); i {
 			case 0:
 				return &v.state
@@ -943,7 +369,7 @@ func file_api_mapreduce_proto_init() {
 				return nil
 			}
 		}
-		file_api_mapreduce_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_api_mapreduce_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Key); i {
 			case 0:
 				return &v.state
@@ -955,7 +381,7 @@ func file_api_mapreduce_proto_init() {
 				return nil
 			}
 		}
-		file_api_mapreduce_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_api_mapreduce_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Value); i {
 			case 0:
 				return &v.state
@@ -967,7 +393,7 @@ func file_api_mapreduce_proto_init() {
 				return nil
 			}
 		}
-		file_api_mapreduce_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_api_mapreduce_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Pair); i {
 			case 0:
 				return &v.state
@@ -985,14 +411,13 @@ func file_api_mapreduce_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_api_mapreduce_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   12,
+			NumEnums:      0,
+			NumMessages:   5,
 			NumExtensions: 0,
-			NumServices:   3,
+			NumServices:   2,
 		},
 		GoTypes:           file_api_mapreduce_proto_goTypes,
 		DependencyIndexes: file_api_mapreduce_proto_depIdxs,
-		EnumInfos:         file_api_mapreduce_proto_enumTypes,
 		MessageInfos:      file_api_mapreduce_proto_msgTypes,
 	}.Build()
 	File_api_mapreduce_proto = out.File

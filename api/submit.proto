@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option go_package = "github.com/vynaloze/mapreduce/api";
+
+
+message FileFormat {
+  enum Format {
+    TEXT = 0;
+    CSV = 1;
+  }
+  Format format = 2;
+}
+
+message DFSFile {
+  string location = 1;
+  FileFormat format = 2;
+  int64 size_bytes = 3;
+}
+
+message InputSpec {
+  repeated DFSFile input_files = 1;
+  int64 input_split_size_bytes = 2;
+}
+
+message OutputSpec {
+  int64 output_partitions = 1;
+  string output_location = 2;
+  FileFormat output_format = 3;
+}
+
+message Spec {
+  InputSpec in = 1;
+  OutputSpec out = 2;
+
+  string mapper = 3;
+  string reducer = 4;
+
+  // TODO params
+}
+
+message Job {
+  string name = 1;
+  Spec spec = 2;
+}
+
+message JobStatus {
+  string message = 1;
+}
+
+service Master {
+  rpc Submit(Job) returns (stream JobStatus) {}
+}

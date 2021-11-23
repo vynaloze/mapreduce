@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/vynaloze/mapreduce/api"
 	internal "github.com/vynaloze/mapreduce/engine/api"
 	"google.golang.org/grpc"
 	"log"
@@ -26,6 +27,8 @@ type Controller interface {
 	ProcessMapTasks(tasks <-chan *internal.MapTask, results chan<- *internal.MapTaskStatus)
 	ProcessMapTask(task *internal.MapTask, results chan<- *internal.MapTaskStatus)
 	ProcessReduceTasks(tasks <-chan *ReduceTask, rerunMapTasks chan<- RerunMapTasks, results chan<- *internal.ReduceTaskStatus)
+
+	RegisterNewExecutable(e *api.MapReduceExecutable)
 }
 
 type controller struct {
@@ -34,7 +37,7 @@ type controller struct {
 	reduceWorkers map[string]ReduceWorker
 	workersMux    sync.RWMutex
 
-	newWorkers <-chan string
+	registry *registryServer
 }
 
 func New(lis net.Listener, s *grpc.Server) Controller {
@@ -42,8 +45,10 @@ func New(lis net.Listener, s *grpc.Server) Controller {
 		workers:       make(map[string]Worker),
 		mapWorkers:    make(map[string]MapWorker),
 		reduceWorkers: make(map[string]ReduceWorker),
+
+		registry: newRegistryServer(),
 	}
-	go c.receiveNewWorkers(serveRegistry(lis, s))
+	go c.receiveNewWorkers(c.registry.serve(lis, s))
 	go c.workerStats()
 	return c
 }

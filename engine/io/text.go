@@ -21,7 +21,9 @@ func (t *TextHandler) Split(spec *external.InputSpec) []internal.Split {
 }
 
 func addSplitsForFile(spec *external.InputSpec, file *external.DFSFile, splits []internal.Split) []internal.Split {
-	f, err := os.Open(file.GetLocation())
+	//loc := strings.ReplaceAll(file.GetLocation(), "/mnt/d", "D:") //TODO
+	loc := file.GetLocation()
+	f, err := os.Open(loc)
 	if err != nil {
 		log.Fatalf("cannot split files: %v", err)
 	}

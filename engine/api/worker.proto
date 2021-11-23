@@ -3,7 +3,7 @@ syntax = "proto3";
 option go_package = "github.com/vynaloze/mapreduce/engine/api";
 
 import "api/mapreduce.proto";
-
+import "api/submit.proto";
 
 message Split {
   DFSFile source = 1;
@@ -23,7 +23,7 @@ message MapTask {
   string id = 1;
   Split input_split = 2;
   int64 partitions = 3;
-  //TODO string mapper = 4;
+  string mapper = 4;
 }
 
 message MapTaskStatus {
@@ -36,7 +36,7 @@ message MapTaskStatus {
 message ReduceTask {
   OutputSpec output_spec = 1;
   int64 partition = 2;
-  //TODO string reducer = 3;
+  string reducer = 3;
 }
 
 message ReduceTaskStatus {

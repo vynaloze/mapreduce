@@ -13,7 +13,7 @@ import (
 const (
 	ttlSeconds       = 60
 	backoffs         = 3
-	heartbeatSeconds = ttlSeconds/backoffs - 1
+	heartbeatSeconds = 2
 )
 
 func Run(addr, masterAddr string) {
