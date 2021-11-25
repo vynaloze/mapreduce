@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"log"
+	"sort"
 	"time"
 )
 
@@ -44,8 +45,13 @@ func (r *reduceWorkerServer) Reduce(task *internal.ReduceTask, stream internal.R
 }
 
 func (r *reduceWorkerServer) reduce(handler mrio.Handler) error {
-	for k, vals := range r.data {
-		err := r.reduceOne(handler, k, vals)
+	var keys []string
+	for k := range r.data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		err := r.reduceOne(handler, k, r.data[k])
 		if err != nil {
 			return err
 		}
