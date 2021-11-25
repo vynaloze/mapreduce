@@ -14,7 +14,7 @@ func (s *scheduler) split(spec *external.InputSpec) ([]internal.Split, error) {
 	for _, file := range spec.GetInputFiles() {
 		switch format := file.GetFormat().GetFormat(); format {
 		case external.FileFormat_TEXT:
-			splits = append(splits, textHandler.Split(spec)...)
+			splits = append(splits, textHandler.Split(file, spec.GetInputSplitSizeBytes())...)
 		default:
 			return nil, fmt.Errorf("unsupported format: %+v", format)
 		}

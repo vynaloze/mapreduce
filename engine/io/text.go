@@ -12,15 +12,8 @@ import (
 type TextHandler struct {
 }
 
-func (t *TextHandler) Split(spec *external.InputSpec) []internal.Split {
+func (t *TextHandler) Split(file *external.DFSFile, inputSplitSizeBytes int64) []internal.Split {
 	splits := make([]internal.Split, 0)
-	for _, file := range spec.GetInputFiles() {
-		splits = addSplitsForFile(spec, file, splits)
-	}
-	return splits
-}
-
-func addSplitsForFile(spec *external.InputSpec, file *external.DFSFile, splits []internal.Split) []internal.Split {
 	//loc := strings.ReplaceAll(file.GetLocation(), "/mnt/d", "D:") //TODO
 	loc := file.GetLocation()
 	f, err := os.Open(loc)
@@ -29,13 +22,13 @@ func addSplitsForFile(spec *external.InputSpec, file *external.DFSFile, splits [
 	}
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
-	buf := make([]byte, spec.GetInputSplitSizeBytes())
-	scanner.Buffer(buf, int(spec.GetInputSplitSizeBytes()))
+	buf := make([]byte, inputSplitSizeBytes)
+	scanner.Buffer(buf, int(inputSplitSizeBytes))
 
 	var offset, prevOffset int64
 	for scanner.Scan() {
 		length := int64(len(scanner.Bytes()))
-		if offset+length > spec.GetInputSplitSizeBytes() {
+		if offset+length > inputSplitSizeBytes {
 			splits = append(splits, internal.Split{Source: file, Offset: prevOffset, Limit: offset})
 			prevOffset = offset
 		}
